@@ -1,11 +1,12 @@
 import AnnouncementBar from './components/AnnoucementBar'
+import Navbar from './components/Navbar'
 
 
 function App() {
   return (
     <div>
       <AnnouncementBar />
-      <h1>MECCA</h1>
+      <Navbar />
     </div>
   )
 }
