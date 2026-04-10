@@ -1,0 +1,134 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 100;
+}
+
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 480px;
+  height: 100%;
+  background-color: #fff;
+  z-index: 101;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #000;
+}
+
+.content {
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.title {
+  font-family: serif;
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 32px;
+}
+
+.inputGroup {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.inputGroup label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: #666;
+}
+
+.inputGroup input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: #000;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 14px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.submitButton:hover {
+  background-color: #333;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  color: #000;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 13px;
+  margin-top: 16px;
+}
+
+.forgotPassword {
+  text-align: left;
+  margin-top: 8px;
+}
+
+.forgotPassword a {
+  font-size: 13px;
+  color: #000;
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: #666;
+}
+
+.checkboxGroup input {
+  margin-top: 2px;
+}
+
+.disclaimer {
+  font-size: 11px;
+  color: #999;
+  margin-top: 16px;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}

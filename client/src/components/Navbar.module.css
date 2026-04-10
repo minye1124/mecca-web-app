@@ -57,6 +57,18 @@
     opacity: 0.6;
 }
 
+.iconButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #000;
+  padding: 0;
+}
+
+.iconButton:hover {
+  opacity: 0.7;
+}
+
 /* Row 2 */
 .searchRow {
     display: flex;

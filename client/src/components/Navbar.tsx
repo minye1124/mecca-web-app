@@ -1,6 +1,10 @@
 import styles from "./Navbar.module.css";
+import { useState } from "react";
+import AuthPanel from "./AuthPanel";
 
 function Navbar() {
+    const [showAuth, setShowAuth] = useState(false);
+
     return (
         <header className={styles.header}>
             {/* Row 1: Secondary links | Logo | Icons */}
@@ -10,15 +14,16 @@ function Navbar() {
                     <a href="/memo">MECCA Memo</a>
                     <a href="/stores">Stores</a>
                 </div>
-                
+
                 <a href="/" className={styles.logo}>MECCA</a>
                 <div className={styles.navIcons}>
-                    <a href="/account" aria-label="Account">
+                    <button onClick={() => setShowAuth(true)} className={styles.iconButton} aria-label="Account">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="8" r="4" />
                             <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
                         </svg>
-                    </a>
+                    </button>
+
                     <a href="/wishlist" aria-label="Wishlist">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -63,6 +68,9 @@ function Navbar() {
                 <a href="/gifts">Gifts</a>
                 <a href="/edits">Edits</a>
             </nav>
+
+            {showAuth && <AuthPanel onClose={() => setShowAuth(false)}/>}
+            {/* {showAuth && <AuthPanel onClose={() => setShowAuth(false)} />} */}
         </header>
     );
 }
