@@ -1,5 +1,7 @@
 import AnnouncementBar from './components/AnnoucementBar'
+import Footer from './components/Footer'
 import Navbar from './components/Navbar'
+import HomePage from './pages/HomePage'
 
 
 function App() {
@@ -7,6 +9,8 @@ function App() {
     <div>
       <AnnouncementBar />
       <Navbar />
+      <HomePage />
+      <Footer />
     </div>
   )
 }
