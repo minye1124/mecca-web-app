@@ -2,6 +2,7 @@ using Mecca.API.Models;
 using Mecca.API.DTOs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Mecca.API.Services;
 
 namespace Mecca.API.Controllers;
 
@@ -11,11 +12,13 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
+    private readonly TokenService _tokenService;
 
-    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, TokenService tokenService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _tokenService = tokenService;
     }
 
     [HttpGet("check-email")]
@@ -61,7 +64,9 @@ public class AuthController : ControllerBase
         {
             return Unauthorized(new { message = "Invalid email or password" });
         }
-        return Ok(new { message = "Login successfully" });
+
+        var token = _tokenService.CreateToken(user);
+        return Ok(new { token });
     }
 
 }

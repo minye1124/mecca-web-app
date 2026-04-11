@@ -1,5 +1,6 @@
 using Mecca.API.Data;
 using Mecca.API.Models;
+using Mecca.API.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddIdentity<AppUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<TokenService>();
 
 var app = builder.Build();
 app.MapControllers();
