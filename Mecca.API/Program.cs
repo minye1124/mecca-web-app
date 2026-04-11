@@ -19,4 +19,4 @@ var app = builder.Build();
 app.MapControllers();
 app.Run();
 
-public partial class Program { } // For integration testing purposes
+public partial class Program { } 
