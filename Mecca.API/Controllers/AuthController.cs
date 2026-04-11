@@ -3,6 +3,7 @@ using Mecca.API.DTOs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Mecca.API.Services;
+using System.Security.Claims;
 
 namespace Mecca.API.Controllers;
 
@@ -13,12 +14,14 @@ public class AuthController : ControllerBase
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
     private readonly TokenService _tokenService;
+    private readonly IConfiguration _configuration;
 
-    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, TokenService tokenService)
+    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, TokenService tokenService, IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _tokenService = tokenService;
+        _configuration = configuration;
     }
 
     [HttpGet("check-email")]
@@ -67,6 +70,50 @@ public class AuthController : ControllerBase
 
         var token = _tokenService.CreateToken(user);
         return Ok(new { token });
+    }
+
+    [HttpGet("google-login")]
+    public IActionResult GoogleLogin()
+    {
+        var redirectUrl = Url.Action("GoogleCallback", "Auth", null, Request.Scheme);
+        var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
+        return Challenge(properties, "Google");
+    }
+
+    [HttpGet("google-callback")]
+    public async Task<IActionResult> GoogleCallback()
+    {
+        var info = await _signInManager.GetExternalLoginInfoAsync();
+        if (info == null)
+        {
+            return Redirect($"{_configuration["ClientUrl"]}?error=google-login-failed");
+        }
+
+        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrEmpty(email))
+        {
+            return Redirect($"{_configuration["ClientUrl"]}?error=google-email-not-found");
+        }
+
+        var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
+        var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
+
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user == null)
+        {
+            user = new AppUser
+            {
+                UserName = email,
+                Email = email,
+                FirstName = firstName,
+                LastName = lastName
+            };
+            await _userManager.CreateAsync(user);
+        }
+
+        var token = _tokenService.CreateToken(user);
+        return Redirect($"{_configuration["ClientUrl"]}?token={token}");
     }
 
 }
