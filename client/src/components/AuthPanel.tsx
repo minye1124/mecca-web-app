@@ -13,6 +13,12 @@ function AuthPanel({ onClose }: AuthPanelProps) {
     const [email, setEmail] = useState("");
     const [dob, setDob] = useState("");
 
+    const disclaimer = (
+        <p className={styles.disclaimer}>
+            This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.
+        </p>
+    )
+
     const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let value = e.target.value.replace(/\D/g, "") // Remove non-digit inputs
             .slice(0, 8); // Limit to 8 digits (DDMMYYYY)
@@ -58,7 +64,7 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                             <button className={styles.submitButton} onClick={() => {
                                 registeredEmails.includes(email) ? setStep("login") : setStep("register")
                             }}>Next</button>
-                            <p className={styles.disclaimer}>This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.</p>
+                            {disclaimer}
                         </>
                     )}
 
@@ -78,7 +84,7 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                 <a href="/forgot-password">Can't remember your password?</a>
                             </div>
                             <button className={styles.submitButton}>Login</button>
-                            <p className={styles.disclaimer}>This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.</p>
+                            {disclaimer}
                         </>
                     )}
 
@@ -129,7 +135,7 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                 <label htmlFor="terms">I confirm that I have read and accepted the  <a href="/terms">MECCA's Terms & Conditions</a>, <a href="/terms">Beauty Loop Terms & Conditions</a> and <a href="/privacy">Privacy Policy</a>.</label>
                             </div>
                             <button className={styles.submitButton}>Create my account</button>
-                            <p className={styles.disclaimer}>This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.</p>
+                            {disclaimer}
                         </>
                     )}
 
