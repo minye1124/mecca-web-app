@@ -56,6 +56,13 @@ function AuthPanel({ onClose, onLoginSuccess }: AuthPanelProps) {
                 : "Create my account";
     const loginButtonLabel = status === "loggingIn" ? "Logging in..." : "Login";
 
+    const finalizeLogin = async () => {
+        const loginResponse = await loginWithCredentials();
+        setErrorMessage(null);
+        onLoginSuccess({ user: loginResponse.user, token: loginResponse.token });
+        onClose();
+    }
+
     const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setDob(formatDobInput(e.target.value));
     }
@@ -109,9 +116,7 @@ function AuthPanel({ onClose, onLoginSuccess }: AuthPanelProps) {
         // Automatically log in the user after successful registration
         setStatus("loggingInAfterRegister");
         try {
-            await loginWithCredentials();
-            setErrorMessage(null);
-            onClose();
+            await finalizeLogin();
         } catch {
             setErrorMessage("Login after registration failed. Please try logging in manually.");
             setStep("login");
@@ -124,10 +129,7 @@ function AuthPanel({ onClose, onLoginSuccess }: AuthPanelProps) {
         setErrorMessage(null);
         setStatus("loggingIn");
         try {
-            const loginResponse = await loginWithCredentials();
-            setErrorMessage(null);
-            onLoginSuccess({ user: loginResponse.user, token: loginResponse.token });
-            onClose();
+            await finalizeLogin();
         } catch {
             setErrorMessage("Invalid email or password. Please try again.");
         } finally {
