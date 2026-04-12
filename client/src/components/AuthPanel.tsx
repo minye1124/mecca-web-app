@@ -10,17 +10,24 @@ import {
 import { toIsoDate, formatDobInput } from "../utils/date";
 import { validateRegisterForm, type RegisterFormErrorCode } from "../utils/validation";
 
+type Step = "inputEmail" | "login" | "register";
+type AuthUser = {
+    firstName: string;
+    lastName: string;
+    email: string;
+};
+
 interface AuthPanelProps {
     onClose: () => void;
+    onLoginSuccess: (payload: {user: AuthUser, token: string}) => void;
 }
-type Step = "inputEmail" | "login" | "register";
 
 const registerErrorMessages: Record<RegisterFormErrorCode, string> = {
     "PASSWORD_MISMATCH": "Passwords do not match. Please try again.",
     "TERMS_NOT_ACCEPTED": "Please confirm that you have read and accepted the terms and conditions."
 };
 
-function AuthPanel({ onClose }: AuthPanelProps) {
+function AuthPanel({ onClose, onLoginSuccess }: AuthPanelProps) {
     const [step, setStep] = useState<Step>("inputEmail");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -117,8 +124,9 @@ function AuthPanel({ onClose }: AuthPanelProps) {
         setErrorMessage(null);
         setStatus("loggingIn");
         try {
-            await loginWithCredentials();
+            const loginResponse = await loginWithCredentials();
             setErrorMessage(null);
+            onLoginSuccess({ user: loginResponse.user, token: loginResponse.token });
             onClose();
         } catch {
             setErrorMessage("Invalid email or password. Please try again.");

@@ -56,7 +56,15 @@ dotnet run
 
 Backend runs at http://localhost:5238
 
-### 6. Start the frontend
+### 6. Configure the frontend env
+
+Copy `client/.env.example` to `client/.env` and update values if needed.
+
+```bash
+cp client/.env.example client/.env
+```
+
+### 7. Start the frontend
 
 ```bash
 cd client

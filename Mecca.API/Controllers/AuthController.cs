@@ -70,7 +70,16 @@ public class AuthController : ControllerBase
         }
 
         var token = _tokenService.CreateToken(user);
-        return Ok(new { token });
+        return Ok(new 
+        { 
+            token,
+            user = new 
+            {
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                email = user.Email,
+            }
+        });
     }
 
     [HttpGet("google-login")]
@@ -114,7 +123,7 @@ public class AuthController : ControllerBase
         }
 
         var token = _tokenService.CreateToken(user);
-        return Redirect($"{_configuration["ClientUrl"]}?token={token}");
+        return Redirect($"{_configuration["ClientUrl"]}?token={token}&firstName={user.FirstName}&lastName={user.LastName}&email={user.Email}");
     }
 
 }

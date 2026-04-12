@@ -1,8 +1,13 @@
 import { API_URL } from "../config";
 
 //------------------Interfaces------------------
-export interface LoginResult {
+export interface LoginResponse {
     token: string;
+    user: {
+        firstName: string;
+        lastName: string;
+        email: string;
+    };
 }
 
 export interface LoginPayload {
@@ -38,7 +43,7 @@ export function getGoogleLoginUrl(): string {
     return `${API_URL}/api/auth/google-login`;
 }
 
-export async function login(payload:LoginPayload): Promise<LoginResult> {
+export async function login(payload:LoginPayload): Promise<LoginResponse> {
     const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
