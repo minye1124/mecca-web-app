@@ -31,31 +31,47 @@ function AuthPanel({ onClose }: AuthPanelProps) {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [agreeMarketing, setAgreeMarketing] = useState(false);
     const [agreeTerms, setAgreeTerms] = useState(false);
+    const [status, setStatus] = useState<"idle" | "checkingEmail" | "registering" | "loggingIn" | "loggingInAfterRegister">("idle");
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    const isBusy = status !== "idle";
     const disclaimer = (
         <p className={styles.disclaimer}>
             This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.
         </p>
     )
+    const nextButtonLabel = status === "checkingEmail" ? "Checking..." : "Next";
+    const registerButtonLabel =
+        status === "registering"
+            ? "Creating account..."
+            : status === "loggingInAfterRegister"
+                ? "Signing in..."
+                : "Create my account";
+    const loginButtonLabel = status === "loggingIn" ? "Logging in..." : "Login";
 
     const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setDob(formatDobInput(e.target.value));
-    }
-
-    const handleCheckEmail = async () => {
-        try {
-            const exists = await checkEmailExists(email);
-            setStep(exists ? "login" : "register");
-        } catch {
-            alert("We couldn't check your email right now. Please try again.");
-        }
     }
 
     const loginWithCredentials = async () => {
         return loginRequest({ email, password });
     }
 
+    const handleCheckEmail = async () => {
+        setErrorMessage(null);
+        setStatus("checkingEmail");
+        try {
+            const exists = await checkEmailExists(email);
+            setStep(exists ? "login" : "register");
+        } catch {
+            setErrorMessage("We couldn't check your email right now. Please try again.");
+        } finally {
+            setStatus("idle");
+        }
+    }
+
     const handleRegister = async () => {
+        setErrorMessage(null);
         const result = validateRegisterForm({
             password,
             confirmPassword,
@@ -63,10 +79,11 @@ function AuthPanel({ onClose }: AuthPanelProps) {
         });
 
         if (result.ok === false) {
-            alert(registerErrorMessages[result.code]);
+            setErrorMessage(registerErrorMessages[result.code]);
             return;
         }
 
+        setStatus("registering");
         try {
             await registerRequest({
                 email,
@@ -74,29 +91,39 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                 firstName,
                 lastName,
                 dateOfBirth: toIsoDate(dob),
-                phoneNumber: mobile || null
+                phoneNumber: mobile || null,
+                agreeMarketing
             });
         } catch {
-            alert("Registration failed. Please check your details and try again.");
+            setErrorMessage("Registration failed. Please check your details and try again.");
             return;
         }
 
         // Automatically log in the user after successful registration
+        setStatus("loggingInAfterRegister");
         try {
             await loginWithCredentials();
+            setErrorMessage(null);
             onClose();
         } catch {
-            alert("Login after registration failed. Please try logging in manually.");
+            setErrorMessage("Login after registration failed. Please try logging in manually.");
             setStep("login");
+        } finally {
+            setStatus("idle");
         }
     }
 
     const handleLogin = async () => {
+        setErrorMessage(null);
+        setStatus("loggingIn");
         try {
             await loginWithCredentials();
+            setErrorMessage(null);
             onClose();
         } catch {
-            alert("Invalid email or password. Please try again.");
+            setErrorMessage("Invalid email or password. Please try again.");
+        } finally {
+            setStatus("idle");
         }
     }
 
@@ -107,6 +134,8 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                 <button className={styles.closeButton} onClick={onClose} aria-label="Close">✕</button>
 
                 <div className={styles.content}>
+
+                    {errorMessage && <div className={styles.error}>{errorMessage}</div>}
 
                     {step === "inputEmail" && (
                         <>
@@ -127,14 +156,20 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                 <input
                                     type="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Email address"
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter") handleCheckEmail();
                                     }}
+                                    disabled={isBusy}
                                 />
                             </div>
-                            <button className={styles.submitButton} onClick={handleCheckEmail}>Next</button>
+                            <button className={styles.submitButton} onClick={handleCheckEmail} disabled={isBusy}>
+                                {nextButtonLabel}
+                            </button>
                             {disclaimer}
                         </>
                     )}
@@ -152,17 +187,23 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                 <input
                                     type="password"
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        setErrorMessage(null);
+                                        }}
                                     placeholder="Password"
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter") handleLogin();
                                     }}
+                                    disabled={isBusy}
                                 />
                             </div>
                             <div className={styles.forgotPassword}>
                                 <a href="/forgot-password">Can't remember your password?</a>
                             </div>
-                            <button className={styles.submitButton} onClick={handleLogin}>Login</button>
+                            <button className={styles.submitButton} onClick={handleLogin} disabled={isBusy}>
+                                {loginButtonLabel}
+                            </button>
                             {disclaimer}
                         </>
                     )}
@@ -170,14 +211,26 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                     {step === "register" && (
                         <>
                             <h2 className={styles.title}>New to MECCA? Join Beauty Loop to test, try and love the best in beauty.</h2>
-                            <p className={styles.subtitle}>Already signed up? We can't find your account, so maybe <button className={styles.linkButton} onClick={() => setStep("inputEmail")}>try another email</button></p>
+                            <p className={styles.subtitle}>Already signed up? We can't find your account, so maybe
+                                <button className={styles.linkButton} 
+                                    onClick={() => {
+                                        setErrorMessage(null);
+                                        setStep("inputEmail")
+                                    }}
+                                >
+                                    try another email
+                                </button></p>
                             <div className={styles.inputGroup}>
                                 <label>First Name</label>
                                 <input
                                     type="text"
                                     value={firstName}
-                                    onChange={(e) => setFirstName(e.target.value)}
+                                    onChange={(e) => {
+                                        setFirstName(e.target.value);
+                                        //setErrorMessage(null);
+                                    }}
                                     placeholder="First Name"
+                                    disabled={isBusy}
                                 />
                             </div>
                             <div className={styles.inputGroup}>
@@ -185,8 +238,12 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                 <input
                                     type="text"
                                     value={lastName}
-                                    onChange={(e) => setLastName(e.target.value)}
+                                    onChange={(e) => {
+                                        setLastName(e.target.value);
+                                        //setErrorMessage(null);
+                                    }}
                                     placeholder="Last Name"
+                                    disabled={isBusy}
                                 />
                             </div>
                             <div className={styles.inputGroup}>
@@ -196,6 +253,7 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                     value={dob}
                                     onChange={handleDobChange}
                                     placeholder="Date of birth (optional)"
+                                    disabled={isBusy}
                                 />
                             </div>
                             <div className={styles.inputGroup}>
@@ -205,6 +263,7 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                     value={mobile}
                                     onChange={(e) => setMobile(e.target.value)}
                                     placeholder="Mobile number (optional)"
+                                    disabled={isBusy}
                                 />
                             </div>
                             <div className={styles.inputGroup}>
@@ -216,8 +275,12 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                 <input
                                     type="password"
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Password"
+                                    disabled={isBusy}
                                 />
                             </div>
                             <div className={styles.inputGroup}>
@@ -225,8 +288,12 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                 <input
                                     type="password"
                                     value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        setConfirmPassword(e.target.value);
+                                        setErrorMessage(null);
+                                    }}
                                     placeholder="Confirm Password"
+                                    disabled={isBusy}
                                 />
                             </div>
 
@@ -236,6 +303,7 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                     id="marketing"
                                     checked={agreeMarketing}
                                     onChange={(e) => setAgreeMarketing(e.target.checked)}
+                                    disabled={isBusy}
                                 />
                                 <label htmlFor="marketing">I agree to receive marketing communications such as promotions, offers and updates</label>
                             </div>
@@ -244,14 +312,20 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                                     type="checkbox"
                                     id="terms"
                                     checked={agreeTerms}
-                                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                                    onChange={(e) => {
+                                        setAgreeTerms(e.target.checked);
+                                        setErrorMessage(null);
+                                    }}
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter") handleRegister();
                                     }}
+                                    disabled={isBusy}
                                 />
                                 <label htmlFor="terms">I confirm that I have read and accepted the  <a href="/terms">MECCA's Terms & Conditions</a>, <a href="/terms">Beauty Loop Terms & Conditions</a> and <a href="/privacy">Privacy Policy</a>.</label>
                             </div>
-                            <button className={styles.submitButton} onClick={handleRegister}>Create my account</button>
+                            <button className={styles.submitButton} onClick={handleRegister} disabled={isBusy}>
+                                {registerButtonLabel}
+                            </button>
                             {disclaimer}
                         </>
                     )}

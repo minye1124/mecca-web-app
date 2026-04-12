@@ -41,7 +41,8 @@ public class AuthController : ControllerBase
             FirstName = request.FirstName,
             LastName = request.LastName,
             DateOfBirth = request.DateOfBirth,
-            PhoneNumber = request.PhoneNumber
+            PhoneNumber = request.PhoneNumber,
+            AgreeMarketing = request.AgreeMarketing
         };
 
         var result = await _userManager.CreateAsync(user, request.Password);

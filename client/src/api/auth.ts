@@ -17,6 +17,7 @@ export interface RegisterPayload {
     lastName: string;
     dateOfBirth: string | null; // ISO datetime string
     phoneNumber: string | null;
+    agreeMarketing: boolean;
 }
 
 //------------------functions------------------

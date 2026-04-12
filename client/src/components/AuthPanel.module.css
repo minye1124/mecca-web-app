@@ -31,6 +31,15 @@
   color: #000;
 }
 
+.error {
+  background-color: #ffe0e0;
+  color: #d00;
+  padding: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #d00;
+  border-radius: 4px;
+}
+
 .content {
   padding: 60px 40px;
   text-align: center;
