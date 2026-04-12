@@ -1,12 +1,24 @@
 import React, { useState } from "react";
 import styles from "./AuthPanel.module.css";
 import { GoogleIcon } from "./Icons";
-import { API_URL } from "../config";
+import {
+    checkEmailExists,
+    login as loginRequest,
+    register as registerRequest,
+    getGoogleLoginUrl
+} from "../api/auth";
+import { toIsoDate, formatDobInput } from "../utils/date";
+import { validateRegisterForm, type RegisterFormErrorCode } from "../utils/validation";
 
 interface AuthPanelProps {
     onClose: () => void;
 }
 type Step = "inputEmail" | "login" | "register";
+
+const registerErrorMessages: Record<RegisterFormErrorCode, string> = {
+    "PASSWORD_MISMATCH": "Passwords do not match. Please try again.",
+    "TERMS_NOT_ACCEPTED": "Please confirm that you have read and accepted the terms and conditions."
+};
 
 function AuthPanel({ onClose }: AuthPanelProps) {
     const [step, setStep] = useState<Step>("inputEmail");
@@ -27,82 +39,64 @@ function AuthPanel({ onClose }: AuthPanelProps) {
     )
 
     const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let value = e.target.value.replace(/\D/g, "") // Remove non-digit inputs
-            .slice(0, 8); // Limit to 8 digits (DDMMYYYY)
-
-        if (value.length >= 4) {
-            value = value.slice(0, 2) + "/" + value.slice(2, 4) + "/" + value.slice(4);
-        } else if (value.length >= 2) {
-            value = value.slice(0, 2) + "/" + value.slice(2);
-        }
-
-        setDob(value);
+        setDob(formatDobInput(e.target.value));
     }
 
     const handleCheckEmail = async () => {
-        const response = await fetch(`${API_URL}/api/auth/check-email?email=${email}`);
-        const data = await response.json();
-        setStep(data.exists ? "login" : "register");
+        try {
+            const exists = await checkEmailExists(email);
+            setStep(exists ? "login" : "register");
+        } catch {
+            alert("We couldn't check your email right now. Please try again.");
+        }
     }
 
-    const performLogin = async () => {
-        const response = await fetch(`${API_URL}/api/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
-        });
-
-        if (!response.ok) return false;
-
-        const data = await response.json();
-        console.log("Login successful, token:", data.token);
-        onClose();
-
-        return true;
+    const loginWithCredentials = async () => {
+        return loginRequest({ email, password });
     }
 
     const handleRegister = async () => {
-        if (password !== confirmPassword) {
-            alert("Passwords do not match. Please try again.");
+        const result = validateRegisterForm({
+            password,
+            confirmPassword,
+            termsAccepted: agreeTerms
+        });
+
+        if (result.ok === false) {
+            alert(registerErrorMessages[result.code]);
             return;
         }
 
-        if (!agreeTerms) {
-            alert("Please confirm that you have read and accepted the terms and conditions.");
-            return;
-        }
-
-        const response = await fetch(`${API_URL}/api/auth/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+        try {
+            await registerRequest({
                 email,
                 password,
                 firstName,
                 lastName,
-                dateOfBirth: dob ? new Date(dob.split("/").reverse().join("-")).toISOString() : null,
+                dateOfBirth: toIsoDate(dob),
                 phoneNumber: mobile || null
-            })
-        });
-
-        if (!response.ok) {
+            });
+        } catch {
             alert("Registration failed. Please check your details and try again.");
             return;
         }
 
         // Automatically log in the user after successful registration
-        const loginSuccess = await performLogin();
-        if (!loginSuccess) {
+        try {
+            await loginWithCredentials();
+            onClose();
+        } catch {
             alert("Login after registration failed. Please try logging in manually.");
             setStep("login");
         }
     }
 
     const handleLogin = async () => {
-        const success = await performLogin();
-        if (!success) {
+        try {
+            await loginWithCredentials();
+            onClose();
+        } catch {
             alert("Invalid email or password. Please try again.");
-            return;
         }
     }
 
@@ -120,7 +114,7 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                             <p className={styles.subtitle}>Pop your email address below. We'll check if there's an existing account, or we can start a new one for you.</p>
 
                             <button className={styles.googleButton} onClick={() => {
-                                window.location.href = `${API_URL}/api/auth/google-login`;
+                                window.location.href = getGoogleLoginUrl();
                             }}>
                                 <GoogleIcon />
                                 Continue with Google
