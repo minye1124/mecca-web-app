@@ -1,4 +1,5 @@
-import { API_URL } from "../config";
+//import { API_BATH_PATH } from "../config";
+import { API_BASE_PATH } from "../config";
 
 //------------------Interfaces------------------
 export interface LoginResponse {
@@ -27,10 +28,7 @@ export interface RegisterPayload {
 
 //------------------functions------------------
 export async function checkEmailExists(email: string): Promise<boolean> {
-    const url = new URL(`${API_URL}/api/auth/check-email`);
-    url.searchParams.set("email", email);
-
-    const response = await fetch(url);
+    const response = await fetch(`${API_BASE_PATH}/auth/check-email?email=${encodeURIComponent(email)}`);
     if (!response.ok) {
         throw new Error("Failed to check email");
     }
@@ -40,11 +38,11 @@ export async function checkEmailExists(email: string): Promise<boolean> {
 }
 
 export function getGoogleLoginUrl(): string {
-    return `${API_URL}/api/auth/google-login`;
+    return `${API_BASE_PATH}/auth/google-login`;
 }
 
 export async function login(payload:LoginPayload): Promise<LoginResponse> {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
+    const response = await fetch(`${API_BASE_PATH}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -55,7 +53,7 @@ export async function login(payload:LoginPayload): Promise<LoginResponse> {
 }
 
 export async function register(payload: RegisterPayload): Promise<void> {
-    const response = await fetch(`${API_URL}/api/auth/register`, {
+    const response = await fetch(`${API_BASE_PATH}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

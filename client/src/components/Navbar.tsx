@@ -12,14 +12,14 @@ type AuthUser = {
 
 interface NavbarProps {
     authUser: AuthUser | null;
-    authToken: string | null;
+    //authToken: string | null;
     onLoginSuccess: ({ user, token }: { user: AuthUser; token: string }) => void;
     onSignOut: () => void;
     // setAuthUser: Dispatch<SetStateAction<AuthUser | null>>;
     // setAuthToken: Dispatch<SetStateAction<string | null>>;
 }
 
-function Navbar({ authUser, authToken, onLoginSuccess, onSignOut }: NavbarProps) {
+function Navbar({ authUser, onLoginSuccess, onSignOut }: NavbarProps) {
     const [showAuthPanel, setShowAuthPanel] = useState(false);
     const [showAccountMenu, setShowAccountMenu] = useState(false);
     const [menuClosing, setMenuClosing] = useState(false);

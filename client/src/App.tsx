@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import AnnouncementBar from './components/AnnoucementBar'
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
@@ -12,18 +12,18 @@ type AuthUser = {
 
 function App() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(null);
+  //const [authToken, setAuthToken] = useState<string | null>(null);
 
   const handleLoginSuccess = ({ user, token }: { user: AuthUser; token: string }) => {
     setAuthUser(user);
-    setAuthToken(token);
+    //setAuthToken(token);
     localStorage.setItem("authUser", JSON.stringify(user));
     localStorage.setItem("authToken", token);
   }
 
   const handleSignOut = () => {
     setAuthUser(null);
-    setAuthToken(null);
+    //setAuthToken(null);
     localStorage.removeItem("authUser");
     localStorage.removeItem("authToken");
   }
@@ -36,7 +36,7 @@ function App() {
     if (storedUser && storedToken) {
       try {
         setAuthUser(JSON.parse(storedUser));
-        setAuthToken(storedToken);
+        //setAuthToken(storedToken);
       } catch {
         console.error("Failed to parse stored user");
         localStorage.removeItem("authUser");
@@ -72,7 +72,7 @@ function App() {
       <AnnouncementBar />
       <Navbar
         authUser={authUser}
-        authToken={authToken}
+        //authToken={authToken}
         onLoginSuccess={handleLoginSuccess}
         onSignOut={handleSignOut}
       />

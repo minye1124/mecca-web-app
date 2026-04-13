@@ -1,8 +1,10 @@
+using System.Runtime.InteropServices;
 using Mecca.API.Data;
 using Mecca.API.Models;
 using Mecca.API.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,9 +22,12 @@ builder.Services.AddAuthentication().AddGoogle(options =>
 {
     options.ClientId = builder.Configuration["Google:ClientId"]!;
     options.ClientSecret = builder.Configuration["Google:ClientSecret"]!;
+    options.CallbackPath = "/api/signin-google";
 });
 
 builder.Services.AddScoped<TokenService>();
+
+builder.Services.AddScoped<GoogleAuthService>();
 
 builder.Services.AddCors(options =>
 {
@@ -35,6 +40,18 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+var forwardedHeaderOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor // client IP
+        | ForwardedHeaders.XForwardedHost // http or https
+        | ForwardedHeaders.XForwardedProto // host name
+};
+
+forwardedHeaderOptions.KnownNetworks.Clear(); // Clear the default known networks to allow forwarding from any network
+forwardedHeaderOptions.KnownProxies.Clear(); // Clear the default known proxies to allow forwarding
+
+app.UseForwardedHeaders(forwardedHeaderOptions);
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

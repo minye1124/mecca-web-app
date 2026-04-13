@@ -3,6 +3,7 @@ using Mecca.API.DTOs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Mecca.API.Services;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
 
 namespace Mecca.API.Controllers;
@@ -14,13 +15,15 @@ public class AuthController : ControllerBase
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
     private readonly TokenService _tokenService;
+    private readonly GoogleAuthService _googleAuthService;
     private readonly IConfiguration _configuration;
 
-    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, TokenService tokenService, IConfiguration configuration)
+    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, TokenService tokenService, GoogleAuthService googleAuthService,IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _tokenService = tokenService;
+        _googleAuthService = googleAuthService;
         _configuration = configuration;
     }
 
@@ -85,7 +88,7 @@ public class AuthController : ControllerBase
     [HttpGet("google-login")]
     public IActionResult GoogleLogin()
     {
-        var redirectUrl = Url.Action("GoogleCallback", "Auth", null, Request.Scheme);
+        var redirectUrl = Url.Action(nameof(GoogleCallback), "Auth", null, Request.Scheme)!;
         var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
         return Challenge(properties, "Google");
     }
@@ -93,37 +96,72 @@ public class AuthController : ControllerBase
     [HttpGet("google-callback")]
     public async Task<IActionResult> GoogleCallback()
     {
-        var info = await _signInManager.GetExternalLoginInfoAsync();
-        if (info == null)
+        var result = await _googleAuthService.HandleGoogleCallBackAsync();
+        if (result.Error != null) 
         {
-            return Redirect($"{_configuration["ClientUrl"]}?error=google-login-failed");
+            return RedirectWithError(result.Error);
         }
 
-        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-        if (string.IsNullOrEmpty(email))
+        if (result.User == null) 
         {
-            return Redirect($"{_configuration["ClientUrl"]}?error=google-email-not-found");
+            return RedirectWithError("google-user-not-found");
         }
 
-        var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
-        var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
+        return RedirectWithToken(result.User);
 
-        var user = await _userManager.FindByEmailAsync(email);
+        // var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+        // if (string.IsNullOrEmpty(email))
+        // {
+        //     return Redirect($"{_configuration["ClientUrl"]}?error=google-email-not-found");
+        // }
 
-        if (user == null)
-        {
-            user = new AppUser
-            {
-                UserName = email,
-                Email = email,
-                FirstName = firstName,
-                LastName = lastName
-            };
-            await _userManager.CreateAsync(user);
-        }
+        // var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
+        // var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
 
+        // var user = await _userManager.FindByEmailAsync(email);
+
+        // if (user == null)
+        // {
+        //     user = new AppUser
+        //     {
+        //         UserName = email,
+        //         Email = email,
+        //         FirstName = firstName,
+        //         LastName = lastName
+        //     };
+        //     await _userManager.CreateAsync(user);
+        // }
+
+        // var token = _tokenService.CreateToken(user);
+        // return Redirect($"{_configuration["ClientUrl"]}?token={token}&firstName={user.FirstName}&lastName={user.LastName}&email={user.Email}");
+    }
+
+    private IActionResult RedirectWithError(string error)
+    {
+        var url = QueryHelpers.AddQueryString(
+            _configuration["ClientUrl"]!,
+            "error",
+            error
+        );
+
+        return Redirect(url);
+    }
+
+    private IActionResult RedirectWithToken(AppUser user)
+    {
         var token = _tokenService.CreateToken(user);
-        return Redirect($"{_configuration["ClientUrl"]}?token={token}&firstName={user.FirstName}&lastName={user.LastName}&email={user.Email}");
+        var url = QueryHelpers.AddQueryString(
+            _configuration["ClientUrl"]!,
+            new Dictionary<string, string?>
+            {
+                ["token"] = token,
+                ["firstName"] = user.FirstName,
+                ["lastName"] = user.LastName,
+                ["email"] = user.Email
+            }
+        );
+
+        return Redirect(url);
     }
 
 }
