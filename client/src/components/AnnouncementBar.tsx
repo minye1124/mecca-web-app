@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import styles from "./AnnouncementBar.module.css";
 
 const messages = [
   { text: "Join our Beauty Loop community!", link: { label: "Sign up", url: "/register" } },
   { text: "Take our fragrance quiz!", link: { label: "Start here", url: "/quiz" } },
-  { text: "Just landed: new beauty!", link: { label: "Shop now", url: "/shop" }  },
+  { text: "Just landed: new beauty!", link: { label: "Shop now", url: "/shop" } },
 ];
 
 function AnnouncementBar() {
@@ -32,9 +32,11 @@ function AnnouncementBar() {
         </span>
       </div>
       <button
+        type="button"
         className={styles.pauseButton}
-        onClick={() => setIsPaused(!isPaused)}
+        onClick={() => setIsPaused((prev) => !prev)}
         aria-label={isPaused ? "Play" : "Pause"}
+        aria-pressed={isPaused}
       >
         {isPaused ? "▶" : "⏸"}
       </button>
