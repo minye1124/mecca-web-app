@@ -3,11 +3,11 @@ import styles from "./HomePage.module.css";
 // ── Static Data ──────────────────────────────────────────────
 
 const needToKnowProducts = [
-  { brand: "Korres", name: "Greek Yoghurt Probiotic Superdose Face Mask", price: "$62.00", gradient: "linear-gradient(160deg, #e8eef0 0%, #c8d8dc 100%)" },
-  { brand: "PHLUR", name: "Vanilla Skin Body Oil", price: "$98.00", gradient: "linear-gradient(160deg, #f5e8c0 0%, #e0c878 100%)" },
-  { brand: "Too Faced", name: "Pillow Balm Hydrating Lip Treatment", price: "$44.00", gradient: "linear-gradient(160deg, #fce0e8 0%, #f0b8c8 100%)" },
-  { brand: "Tsu Lange Yor", name: "By Your Side Eau de Parfum", price: "$285.00", gradient: "linear-gradient(160deg, #e8e4f0 0%, #c8c0d8 100%)" },
-  { brand: "Summer Fridays", name: "Lip Butter Balm", price: "$41.00", gradient: "linear-gradient(160deg, #f8dce0 0%, #eeb8c0 100%)" },
+  { id: "korres-greek-yoghurt-probiotic-superdose-face-mask", brand: "Korres", name: "Greek Yoghurt Probiotic Superdose Face Mask", price: "$62.00", gradient: "linear-gradient(160deg, #e8eef0 0%, #c8d8dc 100%)" },
+  { id: "phlur-vanilla-skin-body-oil", brand: "PHLUR", name: "Vanilla Skin Body Oil", price: "$98.00", gradient: "linear-gradient(160deg, #f5e8c0 0%, #e0c878 100%)" },
+  { id: "too-faced-pillow-balm-hydrating-lip-treatment", brand: "Too Faced", name: "Pillow Balm Hydrating Lip Treatment", price: "$44.00", gradient: "linear-gradient(160deg, #fce0e8 0%, #f0b8c8 100%)" },
+  { id: "tsu-lange-yor-by-your-side-eau-de-parfum", brand: "Tsu Lange Yor", name: "By Your Side Eau de Parfum", price: "$285.00", gradient: "linear-gradient(160deg, #e8e4f0 0%, #c8c0d8 100%)" },
+  { id: "summer-fridays-lip-butter-balm-need-to-know", brand: "Summer Fridays", name: "Lip Butter Balm", price: "$41.00", gradient: "linear-gradient(160deg, #f8dce0 0%, #eeb8c0 100%)" },
 ];
 
 const categories = [
@@ -18,11 +18,11 @@ const categories = [
 ];
 
 const curatedProducts = [
-  { brand: "Summer Fridays", name: "Lip Butter Balm", price: "$41.00", rating: 4.8, reviews: 3260, badge: null, gradient: "linear-gradient(160deg, #fce0e4 0%, #f0b8c0 100%)" },
-  { brand: "rhode", name: "Glazing Milk Ceramide Facial Essence", price: "$55.00", rating: 4.7, reviews: 280, badge: "TRENDING NOW", gradient: "linear-gradient(160deg, #e8e8ec 0%, #c8c8d4 100%)" },
-  { brand: "ILIA Beauty", name: "Limitless Lash Mascara", price: "$50.00", rating: 4.6, reviews: 6863, badge: null, gradient: "linear-gradient(160deg, #1a1a1a 0%, #2e2e2e 100%)" },
-  { brand: "rhode", name: "Pocket Blush Buildable Hydrating Cream Blush", price: "$43.00", rating: 4.7, reviews: 267, badge: null, gradient: "linear-gradient(160deg, #c4785c 0%, #a05840 100%)" },
-  { brand: "rhode", name: "Peptide Lip Tint Nourishing Glaze", price: "$35.00", rating: 4.8, reviews: 313, badge: "NEW SHADE", gradient: "linear-gradient(160deg, #f4d0d8 0%, #e0a8b8 100%)" },
+  { id: "summer-fridays-lip-butter-balm", brand: "Summer Fridays", name: "Lip Butter Balm", price: "$41.00", rating: 4.8, reviews: 3260, badge: null, gradient: "linear-gradient(160deg, #fce0e4 0%, #f0b8c0 100%)" },
+  { id: "rhode-glazing-milk-ceramide-facial-essence", brand: "rhode", name: "Glazing Milk Ceramide Facial Essence", price: "$55.00", rating: 4.7, reviews: 280, badge: "TRENDING NOW", gradient: "linear-gradient(160deg, #e8e8ec 0%, #c8c8d4 100%)" },
+  { id: "ilia-beauty-limitless-lash-mascara", brand: "ILIA Beauty", name: "Limitless Lash Mascara", price: "$50.00", rating: 4.6, reviews: 6863, badge: null, gradient: "linear-gradient(160deg, #1a1a1a 0%, #2e2e2e 100%)" },
+  { id: "rhode-pocket-blush-buildable-hydrating-cream-blush", brand: "rhode", name: "Pocket Blush Buildable Hydrating Cream Blush", price: "$43.00", rating: 4.7, reviews: 267, badge: null, gradient: "linear-gradient(160deg, #c4785c 0%, #a05840 100%)" },
+  { id: "rhode-peptide-lip-tint-nourishing-glaze", brand: "rhode", name: "Peptide Lip Tint Nourishing Glaze", price: "$35.00", rating: 4.8, reviews: 313, badge: "NEW SHADE", gradient: "linear-gradient(160deg, #f4d0d8 0%, #e0a8b8 100%)" },
 ];
 
 const memoArticles = [
@@ -124,7 +124,7 @@ function HomePage() {
         <div className={styles.needToKnowRight}>
           <div className={styles.productScroll}>
             {needToKnowProducts.map((p) => (
-              <div key={p.name} className={styles.scrollCard}>
+              <div key={p.id} className={styles.scrollCard}>
                 <div className={styles.scrollCardImage} style={{ background: p.gradient }}>
                   <button className={styles.wishlistBtn} aria-label="Wishlist">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -167,7 +167,7 @@ function HomePage() {
         <h2 className={styles.sectionTitle}>Curated for you</h2>
         <div className={styles.curatedGrid}>
           {curatedProducts.map((p) => (
-            <div key={p.name} className={styles.curatedCard}>
+            <div key={p.id} className={styles.curatedCard}>
               <div className={styles.curatedImage} style={{ background: p.gradient }}>
                 <button className={styles.wishlistBtn} aria-label="Wishlist">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
