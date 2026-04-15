@@ -1,0 +1,64 @@
+.section {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 380px;
+  border-top: 1px solid #e8e8e8;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.left {
+  padding: 48px 40px 48px 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 1px solid #e8e8e8;
+}
+
+.eyebrow {
+  font-size: 22px;
+  font-weight: 300;
+  margin: 0 0 4px 0;
+  color: #000;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 0 0 16px 0;
+  color: #000;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+}
+
+.link {
+  font-size: 13px;
+  color: #000;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link:hover {
+  opacity: 0.6;
+}
+
+.right {
+  overflow: hidden;
+  padding: 32px 0;
+}
+
+.productScroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 0 32px;
+  scrollbar-width: none;
+}
+
+.productScroll::-webkit-scrollbar {
+  display: none;
+}

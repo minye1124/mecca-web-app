@@ -1,12 +1,15 @@
 import { useState } from "react";
+import { useAuth } from "../../../context/AuthContext";
 import { checkEmailExists, login as loginRequest, register as registerRequest } from "../api/auth";
-import { formatDobInput } from "../utils/date";
-import { validateRegisterForm, type RegisterFormErrorCode } from "../utils/validation";
-import { useAuth } from "../context/AuthContext";
-import { toIsoDate } from "../utils/date";
+import { formatDobInput, toIsoDate } from "../../../utils/date";
+import { validateRegisterForm, type RegisterFormErrorCode } from "../../../utils/validation";
+
+import type { CheckEmailStepProps } from "../components/steps/CheckEmailStep";
+import type { LoginStepProps } from "../components/steps/LoginStep";
+import type { RegisterStepProps } from "../components/steps/RegisterStep";
 
 type Step = "inputEmail" | "login" | "register";
-type Status =  "idle" | "checkingEmail" | "registering" | "loggingIn" | "loggingInAfterRegister";
+type Status = "idle" | "checkingEmail" | "registering" | "loggingIn" | "loggingInAfterRegister";
 
 const registerErrorMessages: Record<RegisterFormErrorCode, string> = {
     "PASSWORD_MISMATCH": "Passwords do not match. Please try again.",
@@ -155,44 +158,101 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         clearError();
     }
 
-    return {
-        // state
-        step,
+    const checkEmailStepProps: CheckEmailStepProps = {
+        email,
+        onEmailChange: handleEmailChange,
+        onSubmit: handleCheckEmail,
         isBusy,
-        errorMessage,
+        buttonLabel: nextButtonLabel
+    };
 
-        // field values
+    const loginStepProps: LoginStepProps = {
         email,
         password,
-        confirmPassword,
-        firstName,
-        lastName,
-        mobile,
-        dob,
-        agreeMarketing,
-        agreeTerms,
+        onPasswordChange: handlePasswordChange,
+        onSubmit: handleLogin,
+        isBusy,
+        buttonLabel: loginButtonLabel
+    };
 
-        // button labels
-        nextButtonLabel,
-        loginButtonLabel,
-        registerButtonLabel,
+    const registerProfileFields = [
+        {
+            key: "firstName",
+            label: "First name",
+            value: firstName,
+            onChange: handleFirstNameChange,
+            placeholder: "First name",
+        },
+        {
+            key: "lastName",
+            label: "Last name",
+            value: lastName,
+            onChange: handleLastNameChange,
+            placeholder: "Last name",
+        },
+        {
+            key: "dob",
+            label: "Date of birth (optional)",
+            value: dob,
+            onChange: handleDobChange,
+            placeholder: "Date of birth (optional)",
+        },
+        {
+            key: "mobile",
+            label: "Mobile number (optional)",
+            type: "tel" as const,
+            value: mobile,
+            onChange: handleMobileChange,
+            placeholder: "Mobile number (optional)",
+        },
+    ];
 
-        // field handlers
-        handleEmailChange,
-        handlePasswordChange,
-        handleConfirmPasswordChange,
-        handleFirstNameChange,
-        handleLastNameChange,
-        handleMobileChange,
-        handleDobChange,
-        handleAgreeMarketingChange,
-        handleAgreeTermsChange,
+    const registerPasswordFields = [
+        {
+            key: "password",
+            label: "Password",
+            type: "password" as const,
+            value: password,
+            onChange: handlePasswordChange,
+            placeholder: "Password",
+        },
+        {
+            key: "confirmPassword",
+            label: "Confirm password",
+            type: "password" as const,
+            value: confirmPassword,
+            onChange: handleConfirmPasswordChange,
+            placeholder: "Confirm password",
+        },
+    ];
 
-        // submit or navigation
-        handleCheckEmail,
-        handleRegister,
-        handleLogin,
-        handleBackToCheckEmail,
+
+    const registerStepProps: RegisterStepProps = {
+        onBackToCheckEmail: handleBackToCheckEmail,
+        profileFields: registerProfileFields,
+        email,
+        passwordFields: registerPasswordFields,
+        agreements: {
+            marketing: {
+                checked: agreeMarketing,
+                onChange: handleAgreeMarketingChange
+            },
+            terms: {
+                checked: agreeTerms,
+                onChange: handleAgreeTermsChange
+            }
+        },
+        buttonLabel: registerButtonLabel,
+        onSubmit: handleRegister,
+        isBusy
+    };
+
+    return {
+        step,
+        errorMessage,
+        checkEmailStepProps,
+        loginStepProps,
+        registerStepProps,
     };
 
 }

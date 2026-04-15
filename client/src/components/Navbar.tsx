@@ -1,6 +1,6 @@
 import styles from "./Navbar.module.css";
 import { useState } from "react";
-import AuthPanel from "./AuthPanel";
+import AuthPanel from "../features/auth/components/AuthPanel";
 import { AccountIcon, WishlistIcon, BagIcon } from "./Icons";
 import { useAuth } from "../context/AuthContext";
 import AccountMenu from "./navbar/AccountMenu";

@@ -1,5 +1,5 @@
 import styles from "../AuthPanel.module.css";
-import FormField from "../form/FormField";
+import FormField from "../../../../components/form/FormField";
 import AuthStepShell from "./AuthStepShell";
 
 export interface LoginStepProps {
