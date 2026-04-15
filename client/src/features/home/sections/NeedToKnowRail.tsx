@@ -1,6 +1,7 @@
 import ProductCard from "../components/ProductCard";
-import styles from "./NeedToKnowRail.module.css";
 import type { ProductTeaser } from "../types";
+
+import styles from "./NeedToKnowRail.module.css";
 
 export interface NeedToKnowRailProps {
   products: ProductTeaser[];

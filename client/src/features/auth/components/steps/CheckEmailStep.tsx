@@ -1,8 +1,10 @@
-import styles from "../AuthPanel.module.css";
-import { GoogleIcon } from "../AuthIcons";
 import { getGoogleLoginUrl } from "../../api/auth";
+
+import { GoogleIcon } from "../AuthIcons";
 import AuthTextField from "../AuthTextField";
 import AuthStepShell from "./AuthStepShell";
+
+import styles from "../AuthPanel.module.css";
 
 export interface CheckEmailStepProps {
     email: string;

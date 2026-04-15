@@ -1,6 +1,7 @@
 import ArticleCard from "../components/ArticleCard";
-import styles from "./DiscoverySection.module.css";
 import type { FeaturedArticle, ArticleTeaser, Banner } from "../types";
+
+import styles from "./DiscoverySection.module.css";
 
 export interface DiscoverySectionProps {
   title: string;

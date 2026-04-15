@@ -1,7 +1,8 @@
+import type { CuratedProduct, ProductTeaser } from "../types";
 import ProductQuickActions from "./ProductQuickActions";
 import RatingStars from "./RatingStars";
+
 import styles from "./ProductCard.module.css";
-import type { CuratedProduct, ProductTeaser } from "../types";
 
 type ProductCardVariant = "compact" | "detailed";
 

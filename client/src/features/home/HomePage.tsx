@@ -1,10 +1,11 @@
-import styles from "./HomePage.module.css";
-
 import SectionShell from "./sections/SectionShell";
 import DiscoverySection from "./sections/DiscoverySection";
 import HomeHero from "./sections/HomeHero";
 import NeedToKnowRail from "./sections/NeedToKnowRail";
 import TrustBar from "./sections/TrustBar";
+
+import ProductCard from "./components/ProductCard";
+import CategoryCard from "./components/CategoryCard";
 
 import {
   categories,
@@ -16,8 +17,7 @@ import {
   trustItems,
 } from "./content";
 
-import ProductCard from "./components/ProductCard";
-import CategoryCard from "./components/CategoryCard";
+import styles from "./HomePage.module.css";
 
 function HomePage() {
   return (

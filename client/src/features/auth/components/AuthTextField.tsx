@@ -1,4 +1,5 @@
-import FormField, { type FormFieldProps } from "../../../components/form/FormField";
+import FormField from "../../../components/form/FormField";
+import {type FormFieldProps} from "../../../components/form/FormField";
 
 type AuthTextFieldProps = FormFieldProps & {
     submitOnEnter?: () => void;

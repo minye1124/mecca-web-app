@@ -1,7 +1,11 @@
-import PrimaryButton from "../../../../components/form/PrimaryButton";
-import styles from "../AuthPanel.module.css";
-import Disclaimer from "./Disclaimer";
 import type { ReactNode } from "react";
+
+import PrimaryButton from "../../../../components/form/PrimaryButton";
+import Disclaimer from "./Disclaimer";
+
+import styles from "../AuthPanel.module.css";
+
+
 
 export interface AuthStepShellProps {
     title: string;

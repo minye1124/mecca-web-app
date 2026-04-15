@@ -1,5 +1,5 @@
-import styles from "./CategoryCard.module.css";
 import type { CategoryTeaser } from "../types";
+import styles from "./CategoryCard.module.css";
 
 export interface CategoryCardProps {
   category: CategoryTeaser;

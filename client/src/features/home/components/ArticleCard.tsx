@@ -1,5 +1,5 @@
-import styles from "./ArticleCard.module.css";
 import type { ArticleTeaser } from "../types";
+import styles from "./ArticleCard.module.css";
 
 export interface ArticleCardProps {
   article: ArticleTeaser;

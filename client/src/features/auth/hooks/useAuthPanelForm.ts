@@ -1,9 +1,10 @@
 import { useState } from "react";
+
 import { useAuth } from "../../../context/AuthContext";
-import { checkEmailExists, login as loginRequest, register as registerRequest } from "../api/auth";
 import { formatDobInput, toIsoDate } from "../../../utils/date";
 import { validateRegisterForm, type RegisterFormErrorCode } from "../../../utils/validation";
 
+import { checkEmailExists, login as loginRequest, register as registerRequest } from "../api/auth";
 import type { CheckEmailStepProps } from "../components/steps/CheckEmailStep";
 import type { LoginStepProps } from "../components/steps/LoginStep";
 import type { RegisterStepProps } from "../components/steps/RegisterStep";

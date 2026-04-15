@@ -1,9 +1,11 @@
-import styles from "./AuthPanel.module.css";
-import { useAuthPanelForm } from "../hooks/useAuthPanelForm";
+import SlideInPanel from "../../../components/overlay/SlideInPanel";
+
 import CheckEmailStep from "./steps/CheckEmailStep";
 import RegisterStep from "./steps/RegisterStep";
 import LoginStep from "./steps/LoginStep";
-import SlideInPanel from "../../../components/overlay/SlideInPanel";
+import { useAuthPanelForm } from "../hooks/useAuthPanelForm";
+
+import styles from "./AuthPanel.module.css";
 
 interface AuthPanelProps {
     onClose: () => void;

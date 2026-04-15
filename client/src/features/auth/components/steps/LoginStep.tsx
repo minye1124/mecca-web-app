@@ -1,7 +1,9 @@
-import styles from "../AuthPanel.module.css";
 import FormField from "../../../../components/form/FormField";
+
 import AuthTextField from "../AuthTextField";
 import AuthStepShell from "./AuthStepShell";
+
+import styles from "../AuthPanel.module.css";
 
 export interface LoginStepProps {
     email: string;

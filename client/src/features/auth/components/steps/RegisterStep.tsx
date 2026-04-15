@@ -1,8 +1,10 @@
-import styles from "../AuthPanel.module.css";
-import { type RegisterInputField } from "../../config/registerFields";
 import FormField from "../../../../components/form/FormField";
 import CheckboxField from "../../../../components/form/CheckboxField";
+
+import { type RegisterInputField } from "../../config/registerFields";
 import AuthStepShell from "./AuthStepShell";
+
+import styles from "../AuthPanel.module.css";
 
 type RegisterAgreementField = {
     checked: boolean;

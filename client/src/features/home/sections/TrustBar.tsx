@@ -1,6 +1,7 @@
-import styles from "./TrustBar.module.css";
 import type { TrustItem } from "../types";
 import { ChatIcon, ReviewsIcon, RewardsIcon, ShippingIcon } from "../components/TrustIcons";
+
+import styles from "./TrustBar.module.css";
 
 export interface TrustBarProps {
   items: TrustItem[];
