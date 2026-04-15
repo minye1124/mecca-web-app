@@ -1,5 +1,5 @@
-import styles from "./SlideInPanel.module.css";
 import type { ReactNode } from "react";
+import styles from "./SlideInPanel.module.css";
 
 export interface SlideInPanelProps {
     side: "left" | "right";

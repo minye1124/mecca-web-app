@@ -101,39 +101,12 @@ public class AuthController : ControllerBase
         {
             return RedirectWithError(result.Error);
         }
-
         if (result.User == null) 
         {
             return RedirectWithError("google-user-not-found");
         }
 
         return RedirectWithToken(result.User);
-
-        // var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-        // if (string.IsNullOrEmpty(email))
-        // {
-        //     return Redirect($"{_configuration["ClientUrl"]}?error=google-email-not-found");
-        // }
-
-        // var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
-        // var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
-
-        // var user = await _userManager.FindByEmailAsync(email);
-
-        // if (user == null)
-        // {
-        //     user = new AppUser
-        //     {
-        //         UserName = email,
-        //         Email = email,
-        //         FirstName = firstName,
-        //         LastName = lastName
-        //     };
-        //     await _userManager.CreateAsync(user);
-        // }
-
-        // var token = _tokenService.CreateToken(user);
-        // return Redirect($"{_configuration["ClientUrl"]}?token={token}&firstName={user.FirstName}&lastName={user.LastName}&email={user.Email}");
     }
 
     private IActionResult RedirectWithError(string error)
