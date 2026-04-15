@@ -1,8 +1,7 @@
 import styles from "../AuthPanel.module.css";
 import FormField from "../form/FormField";
 import CheckboxField from "../form/CheckboxField";
-import PrimaryButton from "../form/PrimaryButton";
-import Disclaimer from "./Disclaimer";
+import AuthStepShell from "./AuthStepShell";
 
 
 export interface RegisterStepProps {
@@ -44,17 +43,24 @@ function RegisterStep({
     buttonLabel, onSubmit,
     isBusy
 }: RegisterStepProps) {
-    return (
+    const title = "New to MECCA? Join Beauty Loop to test, try and love the best in beauty.";
+    const subtitle = (
         <>
-            <h2 className={styles.title}>New to MECCA? Join Beauty Loop to test, try and love the best in beauty.</h2>
-            <p className={styles.subtitle}>Already signed up? We can't find your account, so maybe
-                <button className={styles.linkButton}
-                    onClick={onBackToCheckEmail}
-                >
-                    try another email
-                </button>
-            </p>
+            Already signed up? We can't find your account, so maybe
+            <button className={styles.linkButton} onClick={onBackToCheckEmail}>
+                try another email
+            </button>
+        </>
+    )
 
+    return (
+        <AuthStepShell
+            title={title}
+            subtitle={subtitle}
+            submitButtonLabel={buttonLabel}
+            onSubmit={onSubmit}
+            isBusy={isBusy}
+        >
             <FormField
                 label="First name"
                 value={firstName}
@@ -136,15 +142,7 @@ function RegisterStep({
                 <a href="/terms">Beauty Loop Terms & Conditions</a> and{" "}
                 <a href="/privacy">Privacy Policy</a>.
             </CheckboxField>
-
-            <PrimaryButton 
-                label={buttonLabel}
-                onClick={onSubmit}
-                disabled={isBusy}
-            />
-
-            <Disclaimer />
-        </>
+        </AuthStepShell>
     );
 }
 

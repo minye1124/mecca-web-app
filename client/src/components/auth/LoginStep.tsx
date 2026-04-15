@@ -1,7 +1,6 @@
 import styles from "../AuthPanel.module.css";
 import FormField from "../form/FormField";
-import PrimaryButton from "../form/PrimaryButton";
-import Disclaimer from "./Disclaimer";
+import AuthStepShell from "./AuthStepShell";
 
 export interface LoginStepProps {
     email: string;
@@ -14,10 +13,13 @@ export interface LoginStepProps {
 
 function LoginStep({ email, password, onPasswordChange, onSubmit, isBusy, buttonLabel }: LoginStepProps) {
     return (
-        <>
-            <h2 className={styles.title}>Hello! We're so excited to have you here.</h2>
-            <p className={styles.subtitle}>Let's get you logged in.</p>
-
+        <AuthStepShell
+            title="Hello! We're so excited to have you here."
+            subtitle="Let's get you logged in."
+            submitButtonLabel={buttonLabel}
+            onSubmit={onSubmit}
+            isBusy={isBusy}
+        >
             <FormField
                 label="Email address"
                 type="email"
@@ -39,16 +41,8 @@ function LoginStep({ email, password, onPasswordChange, onSubmit, isBusy, button
 
             <div className={styles.forgotPassword}>
                 <a href="/forgot-password">Can't remember your password?</a>
-            </div>
-
-            <PrimaryButton
-                label={buttonLabel}
-                onClick={onSubmit}
-                disabled={isBusy}
-            />
-
-            <Disclaimer />
-        </>
+            </div> 
+        </AuthStepShell>
     );
 }
 
