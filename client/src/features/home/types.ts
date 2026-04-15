@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 export type ProductTeaser = {
   id: string;
   brand: string;
@@ -44,8 +42,10 @@ export type Banner = {
   gradient: string;
 };
 
+export type TrustItemIconKey = "chat" | "shipping" | "rewards" | "reviews";
+
 export type TrustItem = {
   label: string;
   href: string;
-  icon: ReactNode;
+  iconKey: TrustItemIconKey;
 };

@@ -7,6 +7,7 @@ import { validateRegisterForm, type RegisterFormErrorCode } from "../../../utils
 import type { CheckEmailStepProps } from "../components/steps/CheckEmailStep";
 import type { LoginStepProps } from "../components/steps/LoginStep";
 import type { RegisterStepProps } from "../components/steps/RegisterStep";
+import { createRegisterProfileFields, createRegisterPasswordFields } from "../config/registerFields";
 
 type Step = "inputEmail" | "login" | "register";
 type Status = "idle" | "checkingEmail" | "registering" | "loggingIn" | "loggingInAfterRegister";
@@ -175,56 +176,19 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         buttonLabel: loginButtonLabel
     };
 
-    const registerProfileFields = [
-        {
-            key: "firstName",
-            label: "First name",
-            value: firstName,
-            onChange: handleFirstNameChange,
-            placeholder: "First name",
-        },
-        {
-            key: "lastName",
-            label: "Last name",
-            value: lastName,
-            onChange: handleLastNameChange,
-            placeholder: "Last name",
-        },
-        {
-            key: "dob",
-            label: "Date of birth (optional)",
-            value: dob,
-            onChange: handleDobChange,
-            placeholder: "Date of birth (optional)",
-        },
-        {
-            key: "mobile",
-            label: "Mobile number (optional)",
-            type: "tel" as const,
-            value: mobile,
-            onChange: handleMobileChange,
-            placeholder: "Mobile number (optional)",
-        },
-    ];
-
-    const registerPasswordFields = [
-        {
-            key: "password",
-            label: "Password",
-            type: "password" as const,
-            value: password,
-            onChange: handlePasswordChange,
-            placeholder: "Password",
-        },
-        {
-            key: "confirmPassword",
-            label: "Confirm password",
-            type: "password" as const,
-            value: confirmPassword,
-            onChange: handleConfirmPasswordChange,
-            placeholder: "Confirm password",
-        },
-    ];
+    const registerProfileFields = createRegisterProfileFields({
+        firstName, lastName, dob, mobile,
+        onFirstNameChange: handleFirstNameChange,
+        onLastNameChange: handleLastNameChange,
+        onDobChange: handleDobChange,
+        onMobileChange: handleMobileChange
+    });
+    
+    const registerPasswordFields = createRegisterPasswordFields({
+        password, confirmPassword,
+        onPasswordChange: handlePasswordChange,
+        onConfirmPasswordChange: handleConfirmPasswordChange
+    });
 
 
     const registerStepProps: RegisterStepProps = {

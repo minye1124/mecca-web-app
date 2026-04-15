@@ -1,10 +1,10 @@
 import styles from "./Navbar.module.css";
 import { useState } from "react";
-import AuthPanel from "../features/auth/components/AuthPanel";
-import { AccountIcon, WishlistIcon, BagIcon } from "./Icons";
-import { useAuth } from "../context/AuthContext";
+import AuthPanel from "../../features/auth/components/AuthPanel";
+import { AccountIcon, WishlistIcon, BagIcon } from "../icons/AppIcons";
+import { useAuth } from "../../context/AuthContext";
 import AccountMenu from "./navbar/AccountMenu";
-import { useAnimatedDisclosure } from "../hooks/useAnimatedDisclosure";
+import { useAnimatedDisclosure } from "../../hooks/useAnimatedDisclosure";
 import SearchBar from "./navbar/SearchBar";
 import CategoryNav from "./navbar/CategoryNav";
 

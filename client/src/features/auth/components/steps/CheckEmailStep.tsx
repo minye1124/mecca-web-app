@@ -1,7 +1,7 @@
 import styles from "../AuthPanel.module.css";
-import { GoogleIcon } from "../../../../components/Icons";
+import { GoogleIcon } from "../AuthIcons";
 import { getGoogleLoginUrl } from "../../api/auth";
-import FormField from "../../../../components/form/FormField";
+import AuthTextField from "../AuthTextField";
 import AuthStepShell from "./AuthStepShell";
 
 export interface CheckEmailStepProps {
@@ -31,16 +31,14 @@ function CheckEmailStep({ email, onEmailChange, onSubmit, isBusy, buttonLabel }:
 
             <p className={styles.divider}>or</p>
 
-            <FormField
+            <AuthTextField
                 label="Email address"
                 type="email"
                 value={email}
                 onChange={onEmailChange}
                 placeholder="Email address"
                 disabled={isBusy}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter") onSubmit();
-                }}
+                submitOnEnter={onSubmit}
             />
         </AuthStepShell>
     );

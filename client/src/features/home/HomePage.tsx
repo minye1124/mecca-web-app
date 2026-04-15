@@ -1,10 +1,10 @@
 import styles from "./HomePage.module.css";
 
-import SectionShell from "../features/home/sections/SectionShell";
-import DiscoverySection from "../features/home/sections/DiscoverySection";
-import HomeHero from "../features/home/sections/HomeHero";
-import NeedToKnowRail from "../features/home/sections/NeedToKnowRail";
-import TrustBar from "../features/home/sections/TrustBar";
+import SectionShell from "./sections/SectionShell";
+import DiscoverySection from "./sections/DiscoverySection";
+import HomeHero from "./sections/HomeHero";
+import NeedToKnowRail from "./sections/NeedToKnowRail";
+import TrustBar from "./sections/TrustBar";
 
 import {
   categories,
@@ -14,10 +14,10 @@ import {
   banners,
   needToKnowProducts,
   trustItems,
-} from "../features/home/content";
+} from "./content";
 
-import ProductCard from "../features/home/components/ProductCard";
-import CategoryCard from "../features/home/components/CategoryCard";
+import ProductCard from "./components/ProductCard";
+import CategoryCard from "./components/CategoryCard";
 
 function HomePage() {
   return (

@@ -1,5 +1,5 @@
 import styles from "./AccountMenu.module.css";
-import type { AuthUser } from "../../types/auth";
+import type { AuthUser } from "../../../types/auth";
 
 export interface AccountMenuProps {
     authUser: AuthUser;

@@ -1,16 +1,8 @@
 import styles from "../AuthPanel.module.css";
+import { type RegisterInputField } from "../../config/registerFields";
 import FormField from "../../../../components/form/FormField";
 import CheckboxField from "../../../../components/form/CheckboxField";
 import AuthStepShell from "./AuthStepShell";
-
-type RegisterInputField = {
-    key: string;
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    placeholder?: string;
-    type?: "text" | "email" | "password" | "tel";
-}
 
 type RegisterAgreementField = {
     checked: boolean;

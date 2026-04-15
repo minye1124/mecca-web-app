@@ -1,5 +1,6 @@
 import styles from "../AuthPanel.module.css";
 import FormField from "../../../../components/form/FormField";
+import AuthTextField from "../AuthTextField";
 import AuthStepShell from "./AuthStepShell";
 
 export interface LoginStepProps {
@@ -27,16 +28,14 @@ function LoginStep({ email, password, onPasswordChange, onSubmit, isBusy, button
                 disabled
             />
 
-            <FormField
+            <AuthTextField
                 label="Password"
                 type="password"
                 value={password}
                 onChange={onPasswordChange}
                 placeholder="Password"
                 disabled={isBusy}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter") onSubmit();
-                }}
+                submitOnEnter={onSubmit}
             />
 
             <div className={styles.forgotPassword}>

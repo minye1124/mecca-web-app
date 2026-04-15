@@ -1,5 +1,5 @@
 import styles from "./SearchBar.module.css";
-import { SearchIcon } from "../Icons";
+import { SearchIcon } from "../../icons/AppIcons";
 
 function SearchBar() {
     return (

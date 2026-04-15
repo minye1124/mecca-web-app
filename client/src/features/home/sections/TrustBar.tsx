@@ -1,9 +1,17 @@
 import styles from "./TrustBar.module.css";
 import type { TrustItem } from "../types";
+import { ChatIcon, ReviewsIcon, RewardsIcon, ShippingIcon } from "../components/TrustIcons";
 
 export interface TrustBarProps {
   items: TrustItem[];
 }
+
+const iconMap = {
+    chat: <ChatIcon />,
+    shipping: <ShippingIcon />,
+    rewards: <RewardsIcon />,
+    reviews: <ReviewsIcon />,
+  }
 
 function TrustBar({ items }: TrustBarProps) {
   return (
@@ -12,7 +20,7 @@ function TrustBar({ items }: TrustBarProps) {
       <div className={styles.trustItems}>
         {items.map((item) => (
           <a key={item.label} href={item.href} className={styles.trustItem}>
-            <span className={styles.trustIcon}>{item.icon}</span>
+            <span className={styles.trustIcon}>{iconMap[item.iconKey]}</span>
             <span className={styles.trustText}>{item.label}</span>
           </a>
         ))}
