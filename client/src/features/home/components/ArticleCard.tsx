@@ -1,18 +1,19 @@
-import type { ArticleTeaser } from "../types";
+import type { ArticleSummary } from "../types";
+import { formatPublishedDate, formatReadTime } from "../formatters";
 import styles from "./ArticleCard.module.css";
 
 export interface ArticleCardProps {
-  article: ArticleTeaser;
+  article: ArticleSummary;
 }
 
 function ArticleCard({ article }: ArticleCardProps) {
   return (
     <a href={article.href} className={styles.card}>
-      <div className={styles.image} style={{ background: article.gradient }} />
+      <div className={styles.image} style={{ background: article.media.value }} />
       <p className={styles.tag}>{article.tag}</p>
       <p className={styles.title}>{article.title}</p>
       <p className={styles.meta}>
-        {article.date} · {article.read}
+        {formatPublishedDate(article.publishedAt)} · {formatReadTime(article.readTimeMinutes)}
       </p>
     </a>
   );

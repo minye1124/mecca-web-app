@@ -1,29 +1,33 @@
-import type { CuratedProduct, ProductTeaser } from "../types";
+import type {
+  ProductSummary,
+  RecommendedProduct,
+} from "../types";
+import { formatMoney } from "../formatters";
 import ProductQuickActions from "./ProductQuickActions";
 import RatingStars from "./RatingStars";
 
 import styles from "./ProductCard.module.css";
 
 type ProductCardVariant = "compact" | "detailed";
+type ProductCardData = ProductSummary | RecommendedProduct;
 
 export interface ProductCardProps {
-  product: ProductTeaser | CuratedProduct;
+  product: ProductCardData;
   variant: ProductCardVariant;
 }
 
-function isCuratedProduct(product: ProductTeaser | CuratedProduct): product is CuratedProduct {
-  return "rating" in product && "reviews" in product;
+function isRecommendedProduct(product: ProductCardData): product is RecommendedProduct {
+  return "socialProof" in product;
 }
 
 function ProductCard({ product, variant }: ProductCardProps) {
   const isDetailed = variant === "detailed";
-  const curatedProduct = isCuratedProduct(product) ? product : null;
 
   return (
     <div className={`${styles.card} ${isDetailed ? styles.detailed : styles.compact}`}>
       <div
         className={`${styles.media} ${isDetailed ? styles.detailedMedia : styles.compactMedia}`}
-        style={{ background: product.gradient }}
+        style={{ background: product.media.value }}
       >
         <ProductQuickActions />
       </div>
@@ -31,18 +35,20 @@ function ProductCard({ product, variant }: ProductCardProps) {
       <div className={isDetailed ? styles.info : undefined}>
         <p className={isDetailed ? styles.detailedBrand : styles.compactBrand}>{product.brand}</p>
         <p className={isDetailed ? styles.detailedName : styles.compactName}>{product.name}</p>
-        <p className={isDetailed ? styles.detailedPrice : styles.compactPrice}>{product.price}</p>
+        <p className={isDetailed ? styles.detailedPrice : styles.compactPrice}>{formatMoney(product.price)}</p>
 
-        {isDetailed && curatedProduct && (
+        {isDetailed && isRecommendedProduct(product) && (
           <>
             <div className={styles.meta}>
-              <RatingStars rating={curatedProduct.rating} />
+              <RatingStars rating={product.socialProof.rating} />
               <span className={styles.reviewCount}>
-                ({curatedProduct.reviews.toLocaleString()})
+                ({product.socialProof.reviewCount.toLocaleString()})
               </span>
             </div>
 
-            {curatedProduct.badge && <span className={styles.badge}>{curatedProduct.badge}</span>}
+            {product.badge?.label && (
+              <span className={styles.badge}>{product.badge.label}</span>
+            )}
           </>
         )}
       </div>

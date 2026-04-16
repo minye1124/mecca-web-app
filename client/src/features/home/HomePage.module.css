@@ -1,22 +1,5 @@
-/* ── Base ── */
 .main {
   font-family: system-ui, -apple-system, "Helvetica Neue", sans-serif;
   color: #000;
   background: #fff;
 }
-
-/* ── 3. Shop by Category ── */
-.categoryGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-/* ── 4. Curated for You ── */
-.curatedGrid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-}
-
-

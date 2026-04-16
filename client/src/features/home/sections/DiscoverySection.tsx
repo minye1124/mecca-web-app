@@ -1,61 +1,54 @@
 import ArticleCard from "../components/ArticleCard";
-import type { FeaturedArticle, ArticleTeaser, Banner } from "../types";
+import { formatPublishedDate, formatReadTime } from "../formatters";
+import type { DiscoverySection as DiscoverySectionContent } from "../types";
 
 import styles from "./DiscoverySection.module.css";
 
 export interface DiscoverySectionProps {
-  title: string;
-  featuredArticle: FeaturedArticle;
-  articles: ArticleTeaser[];
-  banners: Banner[];
+  section: DiscoverySectionContent;
 }
 
-function DiscoverySection({
-  title,
-  featuredArticle,
-  articles,
-  banners,
-}: DiscoverySectionProps) {
+function DiscoverySection({ section }: DiscoverySectionProps) {
   return (
     <section className={styles.section}>
-      <h2 className={styles.headline}>{title}</h2>
+      <h2 className={styles.headline}>{section.title}</h2>
 
       <div className={styles.featured}>
         <div
           className={styles.featuredMain}
-          style={{ background: featuredArticle.mainGradient }}
+          style={{ background: section.featured.primaryMedia.value }}
         />
         <div className={styles.featuredSide}>
           <div
             className={styles.featuredSideImage}
-            style={{ background: featuredArticle.sideGradient }}
+            style={{ background: section.featured.secondaryMedia.value }}
           />
           <div className={styles.featuredSideText}>
             <p className={styles.meta}>
-              {featuredArticle.date} · {featuredArticle.read}
+              {formatPublishedDate(section.featured.publishedAt)} · {formatReadTime(section.featured.readTimeMinutes)}
             </p>
-            <h3 className={styles.title}>{featuredArticle.title}</h3>
+            <h3 className={styles.title}>{section.featured.title}</h3>
           </div>
         </div>
       </div>
 
       <div className={styles.articleRow}>
-        {articles.map((article) => (
-          <ArticleCard key={article.title} article={article} />
+        {section.articles.map((article) => (
+          <ArticleCard key={article.id} article={article} />
         ))}
       </div>
 
       <div className={styles.banners}>
-        {banners.map((banner) => (
+        {section.promos.map((promo) => (
           <div
-            key={banner.title}
+            key={promo.id}
             className={styles.banner}
-            style={{ background: banner.gradient }}
+            style={{ background: promo.media.value }}
           >
             <div className={styles.bannerText}>
-              <p className={styles.bannerTitle}>{banner.title}</p>
-              <a href={banner.href} className={styles.bannerLink}>
-                {banner.linkLabel}
+              <p className={styles.bannerTitle}>{promo.title}</p>
+              <a href={promo.cta.href} className={styles.bannerLink}>
+                {promo.cta.label}
               </a>
             </div>
           </div>

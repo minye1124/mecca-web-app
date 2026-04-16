@@ -1,21 +1,11 @@
-import SectionShell from "./sections/SectionShell";
 import DiscoverySection from "./sections/DiscoverySection";
-import HomeHero from "./sections/HomeHero";
-import NeedToKnowRail from "./sections/NeedToKnowRail";
-import TrustBar from "./sections/TrustBar";
+import HeroSection from "./sections/HeroSection";
+import FeaturedProductsSection from "./sections/FeaturedProductsSection";
+import CategoriesSection from "./sections/CategoriesSection";
+import RecommendedProductsSection from "./sections/RecommendedProductsSection";
+import ServicesSection from "./sections/ServicesSection";
 
-import ProductCard from "./components/ProductCard";
-import CategoryCard from "./components/CategoryCard";
-
-import {
-  categories,
-  curatedProducts,
-  featuredArticle,
-  articles,
-  banners,
-  needToKnowProducts,
-  trustItems,
-} from "./content";
+import { homePageContent } from "./content";
 
 import styles from "./HomePage.module.css";
 
@@ -24,39 +14,24 @@ function HomePage() {
     <main className={styles.main}>
 
       {/* 1. Hero Banner */}
-      <HomeHero />
+      <HeroSection section={homePageContent.hero} />
 
-      {/* 2. Need to Know */}
-      <NeedToKnowRail products={needToKnowProducts} />
+      {/* 2. Featured Products */}
+      <FeaturedProductsSection section={homePageContent.featuredProducts} />
 
       {/* 3. Shop by Category */}
-      <SectionShell title="Shop by Category">
-        <div className={styles.categoryGrid}>
-          {categories.map((cat) => (
-            <CategoryCard key={cat.title} category={cat} />
-          ))}
-        </div>
-      </SectionShell>
+      <CategoriesSection section={homePageContent.categories} />
 
-      {/* 4. Curated for You */}
-      <SectionShell title="Curated for you">
-        <div className={styles.curatedGrid}>
-          {curatedProducts.map((p) => (
-            <ProductCard key={p.id} product={p} variant="detailed" />
-          ))}
-        </div>
-      </SectionShell>
-
-      {/* 5. MECCA Memo */}
-      <DiscoverySection
-        title="MECCA Memo"
-        featuredArticle={featuredArticle}
-        articles={articles}
-        banners={banners}
+      {/* 4. Recommended Products */}
+      <RecommendedProductsSection
+        section={homePageContent.recommendedProducts}
       />
 
-      {/* 6. From us to you */}
-      <TrustBar items={trustItems} />
+      {/* 5. Discovery Section (events, edits, etc.) */}
+      <DiscoverySection section={homePageContent.discovery} />
+
+      {/* 6. Services */}
+      <ServicesSection section={homePageContent.services} />
 
     </main>
   );

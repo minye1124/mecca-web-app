@@ -1,10 +1,10 @@
-import type { TrustItem } from "../types";
+import type { ServicesSection as ServicesSectionContent } from "../types";
 import { ChatIcon, ReviewsIcon, RewardsIcon, ShippingIcon } from "../components/TrustIcons";
 
-import styles from "./TrustBar.module.css";
+import styles from "./ServicesSection.module.css";
 
-export interface TrustBarProps {
-  items: TrustItem[];
+export interface ServicesSectionProps {
+  section: ServicesSectionContent;
 }
 
 const iconMap = {
@@ -12,15 +12,15 @@ const iconMap = {
     shipping: <ShippingIcon />,
     rewards: <RewardsIcon />,
     reviews: <ReviewsIcon />,
-  }
+};
 
-function TrustBar({ items }: TrustBarProps) {
+function ServicesSection({ section }: ServicesSectionProps) {
   return (
     <section className={styles.trustBar}>
-      <p className={styles.trustLabel}>From us to you</p>
+      <p className={styles.trustLabel}>{section.title}</p>
       <div className={styles.trustItems}>
-        {items.map((item) => (
-          <a key={item.label} href={item.href} className={styles.trustItem}>
+        {section.items.map((item) => (
+          <a key={item.id} href={item.href} className={styles.trustItem}>
             <span className={styles.trustIcon}>{iconMap[item.iconKey]}</span>
             <span className={styles.trustText}>{item.label}</span>
           </a>
@@ -30,4 +30,4 @@ function TrustBar({ items }: TrustBarProps) {
   );
 }
 
-export default TrustBar;
+export default ServicesSection;
