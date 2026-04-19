@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Mecca.API.Services;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Mecca.API.Controllers;
 
@@ -14,15 +15,13 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
-    private readonly TokenService _tokenService;
     private readonly GoogleAuthService _googleAuthService;
     private readonly IConfiguration _configuration;
 
-    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, TokenService tokenService, GoogleAuthService googleAuthService,IConfiguration configuration)
+    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, GoogleAuthService googleAuthService, IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _tokenService = tokenService;
         _googleAuthService = googleAuthService;
         _configuration = configuration;
     }
@@ -31,7 +30,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> CheckEmail([FromQuery] string email)
     {
         var user = await _userManager.FindByEmailAsync(email);
-        return Ok(new { exists = user != null});
+        return Ok(new { exists = user != null });
     }
 
     [HttpPost("register")]
@@ -54,7 +53,17 @@ public class AuthController : ControllerBase
         {
             return BadRequest(result.Errors);
         }
-        return Ok(new { message = "Registration successfully" });
+
+        await _signInManager.SignInAsync(user, isPersistent: true);
+        return Ok(new
+        {
+            user = new
+            {
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                email = user.Email,
+            }
+        });
     }
 
     [HttpPost("login")]
@@ -63,7 +72,7 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
-            return Unauthorized(new { message = "Invalid email or password"});
+            return Unauthorized(new { message = "Invalid email or password" });
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
@@ -72,11 +81,10 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid email or password" });
         }
 
-        var token = _tokenService.CreateToken(user);
-        return Ok(new 
-        { 
-            token,
-            user = new 
+        await _signInManager.SignInAsync(user, isPersistent: true);
+        return Ok(new
+        {
+            user = new
             {
                 firstName = user.FirstName,
                 lastName = user.LastName,
@@ -97,16 +105,17 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GoogleCallback()
     {
         var result = await _googleAuthService.HandleGoogleCallBackAsync();
-        if (result.Error != null) 
+        if (result.Error != null)
         {
             return RedirectWithError(result.Error);
         }
-        if (result.User == null) 
+        if (result.User == null)
         {
             return RedirectWithError("google-user-not-found");
         }
 
-        return RedirectWithToken(result.User);
+        await _signInManager.SignInAsync(result.User, isPersistent: true);
+        return Redirect(_configuration["ClientUrl"]!);
     }
 
     private IActionResult RedirectWithError(string error)
@@ -120,21 +129,31 @@ public class AuthController : ControllerBase
         return Redirect(url);
     }
 
-    private IActionResult RedirectWithToken(AppUser user)
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
     {
-        var token = _tokenService.CreateToken(user);
-        var url = QueryHelpers.AddQueryString(
-            _configuration["ClientUrl"]!,
-            new Dictionary<string, string?>
-            {
-                ["token"] = token,
-                ["firstName"] = user.FirstName,
-                ["lastName"] = user.LastName,
-                ["email"] = user.Email
-            }
-        );
-
-        return Redirect(url);
+        await _signInManager.SignOutAsync();
+        return NoContent();
     }
 
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> Me()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(new
+        {
+            user = new
+            {
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                email = user.Email
+            }
+        });
+    }
 }

@@ -60,3 +60,6 @@ nunit-*.xml
 client/.env
 client/.env.local
 client/.env.*.local
+
+notes/
+.local/
