@@ -7,7 +7,6 @@ export interface FormFieldProps {
     type?: "text" | "email" | "password" | "tel";
     placeholder?: string;
     disabled?: boolean;
-    //readOnly?: boolean;
     onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
@@ -18,7 +17,6 @@ function FormField({
     type = "text",
     placeholder,
     disabled,
-    //readOnly,
     onKeyDown,
 }: FormFieldProps) {
     return (
@@ -30,7 +28,6 @@ function FormField({
                 onChange={(e) => onChange?.(e.target.value)}
                 placeholder={placeholder}
                 disabled={disabled}
-                //readOnly={readOnly}
                 onKeyDown={onKeyDown}
             />
         </div> 

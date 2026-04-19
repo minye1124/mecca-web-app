@@ -2,15 +2,40 @@ using System.Runtime.InteropServices;
 using Mecca.API.Data;
 using Mecca.API.Models;
 using Mecca.API.Services;
+using Mecca.API.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
+using AspNetCoreRateLimit;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add MVC Controller, db context, identity and other services.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+.ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var firstError = context.ModelState
+                .Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .FirstOrDefault();
+
+            var message = string.IsNullOrWhiteSpace(firstError)
+                ? "Please check your input and try again."
+                : firstError;
+
+            return new BadRequestObjectResult(new
+            {
+                code = AuthErrorCodes.ValidationFailed,
+                message
+            });
+        };
+    });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -78,8 +103,19 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(builder.Configuration["ClientUrl"]!)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
+});
+
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+builder.Services.AddInMemoryRateLimiting();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+
+builder.Services.AddHttpsRedirection(options =>
+{
+    options.HttpsPort = 443;
 });
 
 var app = builder.Build();
@@ -95,7 +131,15 @@ forwardedHeaderOptions.KnownNetworks.Clear(); // Clear the default known network
 forwardedHeaderOptions.KnownProxies.Clear(); // Clear the default known proxies to allow forwarding
 
 app.UseForwardedHeaders(forwardedHeaderOptions);
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+// Pipelines
+app.UseHttpsRedirection();
 app.UseCors();
+app.UseIpRateLimiting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

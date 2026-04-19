@@ -6,5 +6,4 @@ export type AuthUser = {
 
 export type AuthSessionPayload = {
     user: AuthUser;
-    token: string;
 };

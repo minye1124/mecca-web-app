@@ -23,7 +23,10 @@ function CheckEmailStep({ email, onEmailChange, onSubmit, isBusy, buttonLabel }:
             onSubmit={onSubmit}
             isBusy={isBusy}
         >
-            <button className={styles.googleButton}
+            <button 
+                type="button"
+                className={styles.googleButton}
+                disabled={isBusy}
                 onClick={() => {
                     window.location.href = getGoogleLoginUrl();
                 }}>

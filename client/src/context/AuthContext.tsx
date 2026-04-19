@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { AuthUser, AuthSessionPayload } from '../types/auth';
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { getCurrentUser, logout } from "../features/auth/api/auth";
+import type { AuthUser, AuthSessionPayload } from "../types/auth";
 
 type AuthContextValue = {
     authUser: AuthUser | null;
@@ -16,68 +17,44 @@ type AuthProviderProps = {
 export function AuthProvider({ children }: AuthProviderProps) {
     const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
-    const login = ({ user, token}: AuthSessionPayload) => {
+    const login = ({ user }: AuthSessionPayload) => {
         setAuthUser(user);
-        localStorage.setItem("authUser", JSON.stringify(user));
-        localStorage.setItem("authToken", token);
     };
 
-    const signOut = () => {
-        setAuthUser(null);
-        clearStoredAuthSession();
+    const signOut = async () => {
+        try {
+            await logout();
+        } finally {
+            setAuthUser(null);
+        }
     };
 
     useEffect(() => {
-        restoreAuthUser();
+        void restoreAuthUser();
     }, []);
 
     useEffect(() => {
         handleAuthCallbackFromUrl();
     }, []);
 
-    function restoreAuthUser() {
-        const storedUser = localStorage.getItem("authUser");
-        const storedToken = localStorage.getItem("authToken");
-
-        if (!storedUser || !storedToken) return;
-
+    async function restoreAuthUser() {
         try {
-            const user = JSON.parse(storedUser) as AuthUser;
-            setAuthUser(user);
+            const response = await getCurrentUser();
+            setAuthUser(response.user);
         } catch {
-            clearStoredAuthSession();
+            setAuthUser(null);
         }
-    }
-
-    function clearStoredAuthSession() {
-        localStorage.removeItem("authUser");
-        localStorage.removeItem("authToken");
     }
 
     function handleAuthCallbackFromUrl() {
         const searchParams = new URLSearchParams(window.location.search);
-        const firstName = searchParams.get("firstName");
-        const lastName = searchParams.get("lastName");
-        const email = searchParams.get("email");
-        const token = searchParams.get("token");
+        const error = searchParams.get("error");
 
-        if (!token || !email) return;
-
-        login({
-            user: {
-                firstName: firstName ?? "",
-                lastName: lastName ?? "",
-                email,
-            },
-            token
-        });
+        if (!error) return;
 
         // Clean up URL to remove auth params
         const url = new URL(window.location.href);
-        url.searchParams.delete("firstName");
-        url.searchParams.delete("lastName");
-        url.searchParams.delete("email");
-        url.searchParams.delete("token");
+        url.searchParams.delete("error");
         window.history.replaceState(
             {}, 
             document.title, 
@@ -90,6 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         login,
         signOut
     };
+    
     return (
         <AuthContext.Provider value={authContextValue}>
             {children}

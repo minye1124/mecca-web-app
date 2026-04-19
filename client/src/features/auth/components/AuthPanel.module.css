@@ -24,6 +24,18 @@
   margin-bottom: 32px;
 }
 
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.buttonContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .googleButton {
   width: 100%;
   padding: 12px;
@@ -41,6 +53,18 @@
 
 .googleButton:hover {
   background-color: #f5f5f5;
+}
+
+.googleButton:disabled {
+  background-color: #f9f9f9;
+  color: #999;
+  border-color: #eee;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.googleButton:disabled:hover {
+  background-color: #f9f9f9;
 }
 
 .divider {

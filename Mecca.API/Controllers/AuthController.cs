@@ -6,6 +6,7 @@ using Mecca.API.Services;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Mecca.API.Contracts;
 
 namespace Mecca.API.Controllers;
 
@@ -24,6 +25,21 @@ public class AuthController : ControllerBase
         _signInManager = signInManager;
         _googleAuthService = googleAuthService;
         _configuration = configuration;
+    }
+
+    private static (string Code, string Message) MapIdentityError(IdentityError error)
+    {
+        return error.Code switch
+        {
+            "DuplicateUserName" => (AuthErrorCodes.EmailTaken, "An account with this email already exists."),
+            "DuplicateEmail" => (AuthErrorCodes.EmailTaken, "An account with this email already exists."),
+            "PasswordTooShort" => (AuthErrorCodes.PasswordTooShort, "Password must be at least 8 characters."),
+            "PasswordRequiresDigit" => (AuthErrorCodes.PasswordMissingDigit, "Password must include at least one number."),
+            "PasswordRequiresUpper" => (AuthErrorCodes.PasswordMissingUpper, "Password must include at least one uppercase letter."),
+            "PasswordRequiresLower" => (AuthErrorCodes.PasswordMissingLower, "Password must include at least one lowercase letter."),
+            "PasswordRequiresNonAlphanumeric" => (AuthErrorCodes.PasswordMissingSpecial, "Password must include at least one special character."),
+            _ => (AuthErrorCodes.RegistrationFailed, "We couldn't create your account. Please check your details and try again.")
+        };
     }
 
     [HttpGet("check-email")]
@@ -47,11 +63,27 @@ public class AuthController : ControllerBase
             AgreeMarketing = request.AgreeMarketing
         };
 
+        if (request.Password.Any(char.IsWhiteSpace))
+        {
+            return BadRequest(new
+            {
+                code = AuthErrorCodes.PasswordContainsWhitespace,
+                message = "Password cannot contain spaces."
+            });
+        }
+        
         var result = await _userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
         {
-            return BadRequest(result.Errors);
+            var firstError = result.Errors.First();
+            var mapped = MapIdentityError(firstError);
+
+            return BadRequest(new
+            {
+                code = mapped.Code,
+                message = mapped.Message
+            });
         }
 
         await _signInManager.SignInAsync(user, isPersistent: true);
@@ -72,13 +104,21 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
-            return Unauthorized(new { message = "Invalid email or password" });
+            return Unauthorized(new
+            {
+                code = AuthErrorCodes.InvalidCredentials,
+                message = "Invalid email or password"
+            });
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
         if (!result.Succeeded)
         {
-            return Unauthorized(new { message = "Invalid email or password" });
+            return Unauthorized(new
+            {
+                code = AuthErrorCodes.InvalidCredentials,
+                message = "Invalid email or password"
+            });
         }
 
         await _signInManager.SignInAsync(user, isPersistent: true);

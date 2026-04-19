@@ -38,7 +38,7 @@ function RegisterStep({
     const subtitle = (
         <>
             Already signed up? We can't find your account, so maybe
-            <button className={styles.linkButton} onClick={onBackToCheckEmail}>
+            <button className={styles.linkButton} type="button" onClick={onBackToCheckEmail}>
                 try another email
             </button>
         </>

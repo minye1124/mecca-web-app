@@ -2,21 +2,17 @@ import { useState } from "react";
 
 import { useAuth } from "../../../context/AuthContext";
 import { formatDobInput, toIsoDate } from "../../../utils/date";
-import { validateRegisterForm, type RegisterFormErrorCode } from "../../../utils/validation";
+import { validateEmailFormat, validateRegisterForm } from "../../../utils/validation";
 
-import { checkEmailExists, login as loginRequest, register as registerRequest } from "../api/auth";
+import { AuthApiError, checkEmailExists, login as loginRequest, register as registerRequest } from "../api/auth";
 import type { CheckEmailStepProps } from "../components/steps/CheckEmailStep";
 import type { LoginStepProps } from "../components/steps/LoginStep";
 import type { RegisterStepProps } from "../components/steps/RegisterStep";
+import { registerErrorMessages } from "../config/registerErrorMessages";
 import { createRegisterProfileFields, createRegisterPasswordFields } from "../config/registerFields";
 
 type Step = "inputEmail" | "login" | "register";
-type Status = "idle" | "checkingEmail" | "registering" | "loggingIn" | "loggingInAfterRegister";
-
-const registerErrorMessages: Record<RegisterFormErrorCode, string> = {
-    "PASSWORD_MISMATCH": "Passwords do not match. Please try again.",
-    "TERMS_NOT_ACCEPTED": "Please confirm that you have read and accepted the terms and conditions."
-};
+type Status = "idle" | "checkingEmail" | "registering" | "loggingIn";
 
 export interface UseAuthPanelFormOptions {
     onClose: () => void;
@@ -47,9 +43,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     const registerButtonLabel =
         status === "registering"
             ? "Creating account..."
-            : status === "loggingInAfterRegister"
-                ? "Signing in..."
-                : "Create my account";
+            : "Create my account";
 
     // field handlers
     const handleEmailChange = (value: string) => {
@@ -85,18 +79,28 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     const finalizeLogin = async () => {
         const loginResponse = await loginRequest({ email, password });
         setErrorMessage(null);
-        login({ user: loginResponse.user, token: loginResponse.token });
+        login({ user: loginResponse.user });
         onClose();
     }
 
     const handleCheckEmail = async () => {
         setErrorMessage(null);
+
+        if (!validateEmailFormat(email)) {
+            setErrorMessage("Please enter a valid email address.");
+            return;
+        }
+
         setStatus("checkingEmail");
         try {
             const exists = await checkEmailExists(email);
             setStep(exists ? "login" : "register");
-        } catch {
-            setErrorMessage("We couldn't check your email right now. Please try again.");
+        } catch (error) {
+            if (error instanceof AuthApiError) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage("We couldn't check your email right now. Please try again.");
+            }
         } finally {
             setStatus("idle");
         }
@@ -105,6 +109,9 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     const handleRegister = async () => {
         setErrorMessage(null);
         const result = validateRegisterForm({
+            email,
+            firstName,
+            lastName,
             password,
             confirmPassword,
             termsAccepted: agreeTerms
@@ -117,7 +124,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
 
         setStatus("registering");
         try {
-            await registerRequest({
+            const registerResponse = await registerRequest({
                 email,
                 password,
                 firstName,
@@ -126,18 +133,16 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
                 phoneNumber: mobile || null,
                 agreeMarketing
             });
-        } catch {
-            setErrorMessage("Registration failed. Please check your details and try again.");
-            return;
-        }
+            login({ user: registerResponse.user });
+            setErrorMessage(null);
+            onClose();
 
-        // Automatically log in the user after successful registration
-        setStatus("loggingInAfterRegister");
-        try {
-            await finalizeLogin();
-        } catch {
-            setErrorMessage("Login after registration failed. Please try logging in manually.");
-            setStep("login");
+        } catch (error) {
+            if (error instanceof AuthApiError) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage("Registration failed. Please check your details and try again.");
+            }
         } finally {
             setStatus("idle");
         }
@@ -148,8 +153,12 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         setStatus("loggingIn");
         try {
             await finalizeLogin();
-        } catch {
-            setErrorMessage("Invalid email or password. Please try again.");
+        } catch (error) {
+            if (error instanceof AuthApiError) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage("Invalid email or password. Please try again.");
+            }
         } finally {
             setStatus("idle");
         }
@@ -184,7 +193,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         onDobChange: handleDobChange,
         onMobileChange: handleMobileChange
     });
-    
+
     const registerPasswordFields = createRegisterPasswordFields({
         password, confirmPassword,
         onPasswordChange: handlePasswordChange,
