@@ -1,0 +1,14 @@
+.primaryButton {
+  width: 100%;
+  padding: 14px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.primaryButton:hover {
+  background-color: #333;
+}
