@@ -1,0 +1,47 @@
+.page {
+  min-height: 100vh;
+  background: #fff;
+  color: #000;
+  display: flex;
+  flex-direction: column;
+  font-family: "Nunito Sans", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+}
+
+.topBar,
+.bottomBar {
+  height: 50px;
+  background: #cf4755;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo {
+  color: #000;
+  text-decoration: none;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  line-height: 1;
+}
+
+.main {
+  flex: 1;
+  padding: 44px 0 64px;
+}
+
+.hero {
+  max-width: 1200px;
+  margin: 0 auto 24px;
+  padding: 0 32px;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.2;
+}
