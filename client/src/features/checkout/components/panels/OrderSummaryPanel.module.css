@@ -1,0 +1,18 @@
+.section {
+}
+
+.placeholder {
+  min-height: 320px;
+  border: 1px dashed #c7c7c7;
+  background: #f5f3ee;
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.label {
+  color: #666;
+  font-size: 15px;
+  line-height: 1.5;
+}
