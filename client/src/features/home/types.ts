@@ -1,11 +1,8 @@
+import type { Money } from "../../types/money";
+
 export type LinkRef = {
   label: string;
   href: string;
-};
-
-export type Money = {
-  amount: number;
-  currency: "AUD";
 };
 
 export type MediaSurface = {

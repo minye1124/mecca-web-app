@@ -1,8 +1,6 @@
-import type {
-  ProductSummary,
-  RecommendedProduct,
-} from "../types";
-import { formatMoney } from "../formatters";
+import { formatMoney } from "../../../utils/money";
+
+import type { ProductSummary, RecommendedProduct } from "../types";
 import ProductQuickActions from "./ProductQuickActions";
 import RatingStars from "./RatingStars";
 

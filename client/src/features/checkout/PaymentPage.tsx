@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { paymentPageContent } from "./content";
 import Layout from "./components/layout/Layout";
 import StepIndicator from "./components/progress/StepIndicator";
 import OrderSummaryPanel from "./components/panels/OrderSummaryPanel";
@@ -18,14 +19,14 @@ function PaymentPage() {
 
             <main className={styles.main}>
                 <section className={styles.hero}>
-                    <h1 className={styles.title}>Checkout</h1>
+                    <h1 className={styles.title}>{paymentPageContent.title}</h1>
                 </section>
 
                 <StepIndicator currentStep="payment" />
 
                 <Layout
                     left={<PaymentPanel />}
-                    right={<OrderSummaryPanel />}
+                    right={<OrderSummaryPanel summary={paymentPageContent.orderSummary} />}
                 />
             </main>
 
