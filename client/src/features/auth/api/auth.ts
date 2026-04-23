@@ -14,6 +14,10 @@ export interface ConfirmEmailPayload {
     token: string;
 }
 
+export interface ResendConfirmationEmailPayload {
+    email: string;
+}
+
 export interface LoginPayload {
     email: string;
     password: string;
@@ -93,6 +97,21 @@ export function getGoogleLoginUrl(): string {
 
 export async function confirmEmail(payload: ConfirmEmailPayload): Promise<{ message: string }> {
     const response = await fetch(`${API_BASE_PATH}/auth/confirm-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw await parseErrorResponse(response);
+
+    return response.json();
+}
+
+export async function resendConfirmationEmail(
+    payload: ResendConfirmationEmailPayload
+): Promise<{ message: string; confirmationLink?: string }> {
+    const response = await fetch(`${API_BASE_PATH}/auth/resend-confirmation-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

@@ -96,6 +96,7 @@ builder.Services.AddAuthentication().AddGoogle(options =>
 });
 
 builder.Services.AddScoped<GoogleAuthService>();
+builder.Services.AddScoped<IEmailService, SendGridEmailService>();
 
 builder.Services.AddCors(options =>
 {

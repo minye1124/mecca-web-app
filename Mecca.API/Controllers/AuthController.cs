@@ -19,13 +19,15 @@ public class AuthController : ControllerBase
     private readonly SignInManager<AppUser> _signInManager;
     private readonly GoogleAuthService _googleAuthService;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
 
-    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, GoogleAuthService googleAuthService, IConfiguration configuration)
+    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, GoogleAuthService googleAuthService, IConfiguration configuration, IEmailService emailService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _googleAuthService = googleAuthService;
         _configuration = configuration;
+        _emailService = emailService;
     }
 
     private static (string Code, string Message) MapIdentityError(IdentityError error)
@@ -90,6 +92,7 @@ public class AuthController : ControllerBase
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
         var confirmationLink = $"{_configuration["ClientUrl"]}/confirm-email?userId={user.Id}&token={encodedToken}";
+        await _emailService.SendEmailConfirmationAsync(user.Email!, confirmationLink);
 
         return Ok(new
         {
@@ -112,12 +115,28 @@ public class AuthController : ControllerBase
                 message = "Invalid confirmation link."
             });
         }
-
+        if (user.EmailConfirmed)
+        {
+            return Ok(new
+            {
+                message = "Your email is already confirmed. You can now log in."
+            });
+        }
         var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token));
         var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
 
         if (!result.Succeeded)
         {
+            var refreshedUser = await _userManager.FindByIdAsync(request.UserId);
+
+            if (refreshedUser?.EmailConfirmed == true)
+            {
+                return Ok(new
+                {
+                    message = "Your email is already confirmed. You can now log in."
+                });
+            }
+            
             return BadRequest(new
             {
                 code = AuthErrorCodes.ValidationFailed,
@@ -128,6 +147,31 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             message = "Email confirmed successfully."
+        });
+    }
+
+    [HttpPost("resend-confirmation-email")]
+    public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailRequest request)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+
+        if (user != null && !user.EmailConfirmed)
+        {
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var confirmationLink = $"{_configuration["ClientUrl"]}/confirm-email?userId={user.Id}&token={encodedToken}";
+
+            await _emailService.SendEmailConfirmationAsync(user.Email!, confirmationLink);
+
+            return Ok(new
+            {
+                message = "If your account requires email verification, a confirmation email has been sent.",
+            });
+        }
+
+        return Ok(new
+        {
+            message = "If your account requires email verification, a confirmation email has been sent."
         });
     }
 

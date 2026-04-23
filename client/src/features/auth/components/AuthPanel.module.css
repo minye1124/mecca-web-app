@@ -7,6 +7,18 @@
   border-radius: 4px;
 }
 
+.info {
+  background-color: #eef8f1;
+  color: #25643b;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  border: 1px solid #b8dcc4;
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .content {
   padding: 60px 40px;
   text-align: center;

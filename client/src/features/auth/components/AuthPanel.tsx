@@ -22,6 +22,10 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                     <div className={styles.error}>{form.errorMessage}</div>
                 )}
 
+                {form.infoMessage && (
+                    <div className={styles.info}>{form.infoMessage}</div>
+                )}
+                
                 {form.step === "inputEmail" && (
                     <CheckEmailStep {...form.checkEmailStepProps} />
                 )}

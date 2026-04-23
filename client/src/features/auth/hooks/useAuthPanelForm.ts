@@ -4,7 +4,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { formatDobInput, toIsoDate } from "../../../utils/date";
 import { validateEmailFormat, validateRegisterForm } from "../../../utils/validation";
 
-import { AuthApiError, checkEmailExists, login as loginRequest, register as registerRequest } from "../api/auth";
+import { AuthApiError, checkEmailExists, resendConfirmationEmail, login as loginRequest, register as registerRequest } from "../api/auth";
 import type { CheckEmailStepProps } from "../components/steps/CheckEmailStep";
 import type { CheckEmailInboxStepProps } from "../components/steps/CheckEmailInboxStep";
 import type { LoginStepProps } from "../components/steps/LoginStep";
@@ -13,7 +13,7 @@ import { registerErrorMessages } from "../config/registerErrorMessages";
 import { createRegisterProfileFields, createRegisterPasswordFields } from "../config/registerFields";
 
 type Step = "inputEmail" | "login" | "register" | "checkEmailInbox";
-type Status = "idle" | "checkingEmail" | "registering" | "loggingIn";
+type Status = "idle" | "checkingEmail" | "registering" | "loggingIn" | "resendingConfirmation";
 
 export interface UseAuthPanelFormOptions {
     onClose: () => void;
@@ -34,9 +34,13 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     const [agreeTerms, setAgreeTerms] = useState(false);
     const [status, setStatus] = useState<Status>("idle");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
     const isBusy = status !== "idle";
-    const clearError = () => setErrorMessage(null);
+    const clearMessages = () => {
+        setErrorMessage(null);
+        setInfoMessage(null);
+    };
 
     // derived labels
     const nextButtonLabel = status === "checkingEmail" ? "Checking..." : "Next";
@@ -49,26 +53,40 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     // field handlers
     const handleEmailChange = (value: string) => {
         setEmail(value);
-        clearError();
+        clearMessages();
     }
 
     const handlePasswordChange = (value: string) => {
         setPassword(value);
-        clearError();
+        clearMessages();
     }
 
     const handleConfirmPasswordChange = (value: string) => {
         setConfirmPassword(value);
-        clearError();
+        clearMessages();
     }
 
     const handleReturnToLogin = () => {
         setStep("login");
-        clearError();
+        clearMessages();
     };
 
-    const handleResendConfirmation = () => {
-        clearError();
+    const handleResendConfirmation = async () => {
+        setErrorMessage(null);
+        setStatus("resendingConfirmation");
+
+        try {
+            const response = await resendConfirmationEmail({ email });
+            setInfoMessage(response.message);
+        } catch (error) {
+            if (error instanceof AuthApiError) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage("We couldn't resend the verification email. Please try again.");
+            }
+        } finally {
+            setStatus("idle");
+        }
     };
 
     const handleFirstNameChange = (value: string) => setFirstName(value);
@@ -82,7 +100,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     const handleAgreeMarketingChange = (value: boolean) => setAgreeMarketing(value);
     const handleAgreeTermsChange = (value: boolean) => {
         setAgreeTerms(value);
-        clearError();
+        clearMessages();
     }
 
     // submit or navigation
@@ -180,7 +198,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
 
     const handleBackToCheckEmail = () => {
         setStep("inputEmail");
-        clearError();
+        clearMessages();
     }
 
     const checkEmailStepProps: CheckEmailStepProps = {
@@ -245,6 +263,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     return {
         step,
         errorMessage,
+        infoMessage,
         checkEmailStepProps,
         checkEmailInboxStepProps,
         loginStepProps,
