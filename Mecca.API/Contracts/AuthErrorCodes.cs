@@ -3,6 +3,7 @@ namespace Mecca.API.Contracts;
 public static class AuthErrorCodes
 {
     public const string InvalidCredentials = "INVALID_CREDENTIALS";
+    public const string EmailNotConfirmed = "EMAIL_NOT_CONFIRMED";
     public const string EmailTaken = "EMAIL_TAKEN";
     public const string EmailInvalid = "EMAIL_INVALID";
     public const string PasswordContainsWhitespace = "PASSWORD_CONTAINS_WHITESPACE";

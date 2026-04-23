@@ -6,12 +6,13 @@ import { validateEmailFormat, validateRegisterForm } from "../../../utils/valida
 
 import { AuthApiError, checkEmailExists, login as loginRequest, register as registerRequest } from "../api/auth";
 import type { CheckEmailStepProps } from "../components/steps/CheckEmailStep";
+import type { CheckEmailInboxStepProps } from "../components/steps/CheckEmailInboxStep";
 import type { LoginStepProps } from "../components/steps/LoginStep";
 import type { RegisterStepProps } from "../components/steps/RegisterStep";
 import { registerErrorMessages } from "../config/registerErrorMessages";
 import { createRegisterProfileFields, createRegisterPasswordFields } from "../config/registerFields";
 
-type Step = "inputEmail" | "login" | "register";
+type Step = "inputEmail" | "login" | "register" | "checkEmailInbox";
 type Status = "idle" | "checkingEmail" | "registering" | "loggingIn";
 
 export interface UseAuthPanelFormOptions {
@@ -60,6 +61,15 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         setConfirmPassword(value);
         clearError();
     }
+
+    const handleReturnToLogin = () => {
+        setStep("login");
+        clearError();
+    };
+
+    const handleResendConfirmation = () => {
+        clearError();
+    };
 
     const handleFirstNameChange = (value: string) => setFirstName(value);
     const handleLastNameChange = (value: string) => setLastName(value);
@@ -124,7 +134,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
 
         setStatus("registering");
         try {
-            const registerResponse = await registerRequest({
+            await registerRequest({
                 email,
                 password,
                 firstName,
@@ -133,9 +143,10 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
                 phoneNumber: mobile || null,
                 agreeMarketing
             });
-            login({ user: registerResponse.user });
             setErrorMessage(null);
-            onClose();
+            setStep("checkEmailInbox");
+            setPassword("");
+            setConfirmPassword("");
 
         } catch (error) {
             if (error instanceof AuthApiError) {
@@ -156,6 +167,9 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         } catch (error) {
             if (error instanceof AuthApiError) {
                 setErrorMessage(error.message);
+                if (error.code === "EMAIL_NOT_CONFIRMED") {
+                    setStep("checkEmailInbox");
+                }
             } else {
                 setErrorMessage("Invalid email or password. Please try again.");
             }
@@ -175,6 +189,14 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         onSubmit: handleCheckEmail,
         isBusy,
         buttonLabel: nextButtonLabel
+    };
+
+    const checkEmailInboxStepProps: CheckEmailInboxStepProps = {
+        email,
+        onSubmit: handleReturnToLogin,
+        onResend: handleResendConfirmation,
+        isBusy,
+        buttonLabel: "Back to login"
     };
 
     const loginStepProps: LoginStepProps = {
@@ -200,7 +222,6 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         onConfirmPasswordChange: handleConfirmPasswordChange
     });
 
-
     const registerStepProps: RegisterStepProps = {
         onBackToCheckEmail: handleBackToCheckEmail,
         profileFields: registerProfileFields,
@@ -225,6 +246,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         step,
         errorMessage,
         checkEmailStepProps,
+        checkEmailInboxStepProps,
         loginStepProps,
         registerStepProps,
     };

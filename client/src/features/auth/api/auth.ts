@@ -9,6 +9,11 @@ export interface AuthUserResponse {
     };
 }
 
+export interface ConfirmEmailPayload {
+    userId: string;
+    token: string;
+}
+
 export interface LoginPayload {
     email: string;
     password: string;
@@ -84,6 +89,19 @@ export async function checkEmailExists(email: string): Promise<boolean> {
 
 export function getGoogleLoginUrl(): string {
     return `${API_BASE_PATH}/auth/google-login`;
+}
+
+export async function confirmEmail(payload: ConfirmEmailPayload): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_PATH}/auth/confirm-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw await parseErrorResponse(response);
+
+    return response.json();
 }
 
 export async function login(payload: LoginPayload): Promise<AuthUserResponse> {

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Mecca.API.Contracts;
+using System.Text;
 
 namespace Mecca.API.Controllers;
 
@@ -71,7 +72,7 @@ public class AuthController : ControllerBase
                 message = "Password cannot contain spaces."
             });
         }
-        
+
         var result = await _userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
@@ -86,15 +87,47 @@ public class AuthController : ControllerBase
             });
         }
 
-        await _signInManager.SignInAsync(user, isPersistent: true);
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+        var confirmationLink = $"{_configuration["ClientUrl"]}/confirm-email?userId={user.Id}&token={encodedToken}";
+
         return Ok(new
         {
-            user = new
+            requiresEmailConfirmation = true,
+            email = user.Email,
+            message = "Registration successful. Please check your email to verify your account.",
+            confirmationLink
+        });
+    }
+
+    [HttpPost("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
+    {
+        var user = await _userManager.FindByIdAsync(request.UserId);
+        if (user == null)
+        {
+            return BadRequest(new
             {
-                firstName = user.FirstName,
-                lastName = user.LastName,
-                email = user.Email,
-            }
+                code = AuthErrorCodes.ValidationFailed,
+                message = "Invalid confirmation link."
+            });
+        }
+
+        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token));
+        var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+
+        if (!result.Succeeded)
+        {
+            return BadRequest(new
+            {
+                code = AuthErrorCodes.ValidationFailed,
+                message = "Invalid or expired confirmation link."
+            });
+        }
+
+        return Ok(new
+        {
+            message = "Email confirmed successfully."
         });
     }
 
@@ -112,6 +145,15 @@ public class AuthController : ControllerBase
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+        if (!user.EmailConfirmed)
+        {
+            return Unauthorized(new
+            {
+                code = AuthErrorCodes.EmailNotConfirmed,
+                message = "Please verify your email before logging in."
+            });
+        }
+
         if (!result.Succeeded)
         {
             return Unauthorized(new
