@@ -20,14 +20,16 @@ public class AuthController : ControllerBase
     private readonly GoogleAuthService _googleAuthService;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
+    private readonly IAuditLogService _auditLogService;
 
-    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, GoogleAuthService googleAuthService, IConfiguration configuration, IEmailService emailService)
+    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, GoogleAuthService googleAuthService, IConfiguration configuration, IEmailService emailService, IAuditLogService auditLogService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _googleAuthService = googleAuthService;
         _configuration = configuration;
         _emailService = emailService;
+        _auditLogService = auditLogService;
     }
 
     private static (string Code, string Message) MapIdentityError(IdentityError error)
@@ -88,6 +90,8 @@ public class AuthController : ControllerBase
                 message = mapped.Message
             });
         }
+
+        await _auditLogService.WriteAsync(AuditEventTypes.AccountCreated, userId: user.Id, email: user.Email, reason: "email_password_registration");
 
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
@@ -239,6 +243,8 @@ public class AuthController : ControllerBase
             });
         }
 
+        await _auditLogService.WriteAsync(AuditEventTypes.PasswordChanged, userId: user.Id, email: user.Email, reason: "password_reset");
+
         return Ok(new
         {
             message = "Your password has been reset successfully."
@@ -248,9 +254,12 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
+        var email = request.Email.Trim().ToLowerInvariant();
+        var user = await _userManager.FindByEmailAsync(email);
+
         if (user == null)
         {
+            await _auditLogService.WriteAsync(AuditEventTypes.FailedLogin, email: email, reason: "user_not_found");
             return Unauthorized(new
             {
                 code = AuthErrorCodes.InvalidCredentials,
@@ -260,6 +269,8 @@ public class AuthController : ControllerBase
 
         if (!user.EmailConfirmed)
         {
+            await _auditLogService.WriteAsync(AuditEventTypes.FailedLogin, userId: user.Id, email: user.Email, reason: "email_not_confirmed");
+
             return Unauthorized(new
             {
                 code = AuthErrorCodes.EmailNotConfirmed,
@@ -280,6 +291,9 @@ public class AuthController : ControllerBase
 
         if (result.IsLockedOut)
         {
+            await _auditLogService.WriteAsync(AuditEventTypes.FailedLogin, userId: user.Id, email: user.Email, reason: "invalid_password");
+            await _auditLogService.WriteAsync(AuditEventTypes.AccountLocked, userId: user.Id, email: user.Email, reason: "failed_login_threshold_reached");
+            
             return StatusCode(StatusCodes.Status423Locked, new
             {
                 code = AuthErrorCodes.AccountLocked,
@@ -289,6 +303,8 @@ public class AuthController : ControllerBase
 
         if (!result.Succeeded)
         {
+            await _auditLogService.WriteAsync( AuditEventTypes.FailedLogin, userId: user.Id, email: user.Email, reason: "invalid_password");
+            
             return Unauthorized(new
             {
                 code = AuthErrorCodes.InvalidCredentials,
@@ -297,6 +313,8 @@ public class AuthController : ControllerBase
         }
 
         await _signInManager.SignInAsync(user, isPersistent: true);
+        
+        await _auditLogService.WriteAsync( AuditEventTypes.SuccessfulLogin, userId: user.Id, email: user.Email, reason: "email_password");
 
         return Ok(new
         {
@@ -331,6 +349,8 @@ public class AuthController : ControllerBase
         }
 
         await _signInManager.SignInAsync(result.User, isPersistent: true);
+        await _auditLogService.WriteAsync(  AuditEventTypes.SuccessfulLogin, userId: result.User.Id, email: result.User.Email, reason: "google_oauth");
+
         return Redirect(_configuration["ClientUrl"]!);
     }
 

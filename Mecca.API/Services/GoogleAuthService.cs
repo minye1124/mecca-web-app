@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Mecca.API.Models;
+using Mecca.API.Contracts;
 using Microsoft.AspNetCore.Identity;
 
 namespace Mecca.API.Services;
@@ -7,11 +8,13 @@ public class GoogleAuthService
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
+    private readonly IAuditLogService _auditLogService;
 
-    public GoogleAuthService(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+    public GoogleAuthService(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IAuditLogService auditLogService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _auditLogService = auditLogService;
     }
 
     public sealed record GoogleAuthResult(AppUser? User, string? Error);
@@ -85,6 +88,8 @@ public class GoogleAuthService
 
         var creatResult = await _userManager.CreateAsync(user);
         if (!creatResult.Succeeded) return (null, "user-creation-failed");
+
+        await _auditLogService.WriteAsync( AuditEventTypes.AccountCreated, userId: user.Id, email: user.Email, reason: "google_oauth_registration");
 
         return (user, null);
     }

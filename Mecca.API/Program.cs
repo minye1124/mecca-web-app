@@ -3,6 +3,7 @@ using Mecca.API.Data;
 using Mecca.API.Models;
 using Mecca.API.Services;
 using Mecca.API.Contracts;
+using Mecca.API.Middleware;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -55,7 +56,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequiredLength = 8;
     options.User.RequireUniqueEmail = true;
-    
+
     options.Lockout.AllowedForNewUsers = true;
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
@@ -99,6 +100,8 @@ builder.Services.AddAuthentication().AddGoogle(options =>
     options.CallbackPath = "/api/signin-google";
 });
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<GoogleAuthService>();
 builder.Services.AddScoped<IEmailService, SendGridEmailService>();
 
@@ -144,6 +147,7 @@ if (!app.Environment.IsDevelopment())
 // Pipelines
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseMiddleware<AuditRateLimitMiddleware>();
 app.UseIpRateLimiting();
 app.UseAuthentication();
 app.UseAuthorization();
