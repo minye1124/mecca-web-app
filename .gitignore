@@ -22,6 +22,19 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+deploy/nginx/logs/*
+!deploy/nginx/logs/.gitkeep
+deploy/nginx/temp/*
+!deploy/nginx/temp/client_body_temp/
+!deploy/nginx/temp/client_body_temp/.gitkeep
+!deploy/nginx/temp/proxy_temp/
+!deploy/nginx/temp/proxy_temp/.gitkeep
+!deploy/nginx/temp/fastcgi_temp/
+!deploy/nginx/temp/fastcgi_temp/.gitkeep
+!deploy/nginx/temp/uwsgi_temp/
+!deploy/nginx/temp/uwsgi_temp/.gitkeep
+!deploy/nginx/temp/scgi_temp/
+!deploy/nginx/temp/scgi_temp/.gitkeep
 
 # .NET Core
 project.lock.json
