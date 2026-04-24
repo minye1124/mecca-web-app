@@ -258,13 +258,32 @@ public class AuthController : ControllerBase
             });
         }
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
         if (!user.EmailConfirmed)
         {
             return Unauthorized(new
             {
                 code = AuthErrorCodes.EmailNotConfirmed,
                 message = "Please verify your email before logging in."
+            });
+        }
+
+        if (await _userManager.IsLockedOutAsync(user))
+        {
+            return StatusCode(StatusCodes.Status423Locked, new
+            {
+                code = AuthErrorCodes.AccountLocked,
+                message = "Your account is temporarily locked due to too many failed login attempts. Please try again later."
+            });
+        }
+
+        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
+
+        if (result.IsLockedOut)
+        {
+            return StatusCode(StatusCodes.Status423Locked, new
+            {
+                code = AuthErrorCodes.AccountLocked,
+                message = "Your account is temporarily locked due to too many failed login attempts. Please try again later."
             });
         }
 
@@ -278,6 +297,7 @@ public class AuthController : ControllerBase
         }
 
         await _signInManager.SignInAsync(user, isPersistent: true);
+
         return Ok(new
         {
             user = new

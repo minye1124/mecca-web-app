@@ -17,4 +17,5 @@ public static class AuthErrorCodes
     public const string ValidationFailed = "VALIDATION_FAILED";
     public const string RegistrationFailed = "REGISTRATION_FAILED";
     public const string RateLimited = "RATE_LIMITED";
+    public const string AccountLocked = "ACCOUNT_LOCKED";
 }
