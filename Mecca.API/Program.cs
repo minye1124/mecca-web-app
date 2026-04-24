@@ -144,6 +144,20 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["Content-Security-Policy"] =
+        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
+
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Permissions-Policy"] =
+        "camera=(), microphone=(), geolocation=(self), payment=(self), usb=(), fullscreen=(self)";
+
+    await next();
+});
+
 // Pipelines
 app.UseHttpsRedirection();
 app.UseCors();
