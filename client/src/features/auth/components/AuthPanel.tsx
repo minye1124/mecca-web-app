@@ -3,6 +3,7 @@ import SlideInPanel from "../../../components/overlay/SlideInPanel";
 import CheckEmailStep from "./steps/CheckEmailStep";
 import RegisterStep from "./steps/RegisterStep";
 import CheckEmailInboxStep from "./steps/CheckEmailInboxStep";
+import ForgotPasswordStep from "./steps/ForgotPasswordStep";
 import LoginStep from "./steps/LoginStep";
 import { useAuthPanelForm } from "../hooks/useAuthPanelForm";
 
@@ -25,7 +26,7 @@ function AuthPanel({ onClose }: AuthPanelProps) {
                 {form.infoMessage && (
                     <div className={styles.info}>{form.infoMessage}</div>
                 )}
-                
+
                 {form.step === "inputEmail" && (
                     <CheckEmailStep {...form.checkEmailStepProps} />
                 )}
@@ -40,6 +41,10 @@ function AuthPanel({ onClose }: AuthPanelProps) {
 
                 {form.step === "register" && (
                     <RegisterStep {...form.registerStepProps} />
+                )}
+
+                {form.step === "forgotPassword" && (
+                    <ForgotPasswordStep {...form.forgotPasswordStepProps} />
                 )}
             </div>
         </SlideInPanel>

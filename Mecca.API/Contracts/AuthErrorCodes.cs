@@ -12,6 +12,7 @@ public static class AuthErrorCodes
     public const string PasswordMissingUpper = "PASSWORD_MISSING_UPPER";
     public const string PasswordMissingLower = "PASSWORD_MISSING_LOWER";
     public const string PasswordMissingSpecial = "PASSWORD_MISSING_SPECIAL";
+    public const string PasswordSameAsCurrent = "PASSWORD_SAME_AS_CURRENT";
 
     public const string ValidationFailed = "VALIDATION_FAILED";
     public const string RegistrationFailed = "REGISTRATION_FAILED";

@@ -55,4 +55,50 @@ public class SendGridEmailService : IEmailService
             throw new InvalidOperationException("Failed to send confirmation email.");
         }
     }
+
+    public async Task SendPasswordResetAsync(string toEmail, string resetLink)
+    {
+        var apiKey = _configuration["SendGrid:ApiKey"];
+        var fromEmail = _configuration["SendGrid:FromEmail"];
+        var fromName = _configuration["SendGrid:FromName"];
+
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new InvalidOperationException("SendGrid API key is not configured.");
+        }
+
+        if (string.IsNullOrWhiteSpace(fromEmail))
+        {
+            throw new InvalidOperationException("SendGrid from email is not configured.");
+        }
+
+        var client = new SendGridClient(apiKey);
+
+        var from = new EmailAddress(fromEmail, fromName);
+        var to = new EmailAddress(toEmail);
+
+        const string subject = "Reset your password";
+        var plainTextContent = $"Reset your password by visiting this link: {resetLink}";
+        var htmlContent = $"""
+        <p>You requested a password reset.</p>
+        <p><a href="{resetLink}">Reset password</a></p>
+        <p>If you did not request this, you can safely ignore this email.</p>
+        """;
+
+        var message = MailHelper.CreateSingleEmail(
+            from,
+            to,
+            subject,
+            plainTextContent,
+            htmlContent
+        );
+
+        var response = await client.SendEmailAsync(message);
+
+        if ((int)response.StatusCode >= 400)
+        {
+            throw new InvalidOperationException("Failed to send password reset email.");
+        }
+    }
+
 }

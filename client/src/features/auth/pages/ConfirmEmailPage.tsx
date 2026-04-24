@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { confirmEmail, AuthApiError } from "./api/auth";
+import { confirmEmail, AuthApiError } from "../api/auth";
 
 type Status = "loading" | "success" | "error";
 

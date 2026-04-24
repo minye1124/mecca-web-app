@@ -4,16 +4,17 @@ import { useAuth } from "../../../context/AuthContext";
 import { formatDobInput, toIsoDate } from "../../../utils/date";
 import { validateEmailFormat, validateRegisterForm } from "../../../utils/validation";
 
-import { AuthApiError, checkEmailExists, resendConfirmationEmail, login as loginRequest, register as registerRequest } from "../api/auth";
+import { AuthApiError, checkEmailExists, resendConfirmationEmail, forgotPassword, login as loginRequest, register as registerRequest } from "../api/auth";
 import type { CheckEmailStepProps } from "../components/steps/CheckEmailStep";
 import type { CheckEmailInboxStepProps } from "../components/steps/CheckEmailInboxStep";
+import type { ForgotPasswordStepProps } from "../components/steps/ForgotPasswordStep";
 import type { LoginStepProps } from "../components/steps/LoginStep";
 import type { RegisterStepProps } from "../components/steps/RegisterStep";
 import { registerErrorMessages } from "../config/registerErrorMessages";
 import { createRegisterProfileFields, createRegisterPasswordFields } from "../config/registerFields";
 
-type Step = "inputEmail" | "login" | "register" | "checkEmailInbox";
-type Status = "idle" | "checkingEmail" | "registering" | "loggingIn" | "resendingConfirmation";
+type Step = "inputEmail" | "login" | "register" | "checkEmailInbox" | "forgotPassword";
+type Status = "idle" | "checkingEmail" | "registering" | "loggingIn" | "resendingConfirmation" | "sendingPasswordReset";
 
 export interface UseAuthPanelFormOptions {
     onClose: () => void;
@@ -83,6 +84,34 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
                 setErrorMessage(error.message);
             } else {
                 setErrorMessage("We couldn't resend the verification email. Please try again.");
+            }
+        } finally {
+            setStatus("idle");
+        }
+    };
+
+    const handleOpenForgotPassword = () => {
+        clearMessages();
+        setStep("forgotPassword");
+    };
+
+    const handleBackToLoginFromForgotPassword = () => {
+        clearMessages();
+        setStep("login");
+    };
+
+    const handleForgotPassword = async () => {
+        clearMessages();
+        setStatus("sendingPasswordReset");
+
+        try {
+            const response = await forgotPassword({ email });
+            setInfoMessage(response.message);
+        } catch (error) {
+            if (error instanceof AuthApiError) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage("We couldn't send password reset instructions. Please try again.");
             }
         } finally {
             setStatus("idle");
@@ -217,11 +246,21 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         buttonLabel: "Back to login"
     };
 
+    const forgotPasswordStepProps: ForgotPasswordStepProps = {
+        email,
+        onBackToLogin: handleBackToLoginFromForgotPassword,
+        onBackToCheckEmail: handleBackToCheckEmail,
+        onSubmit: handleForgotPassword,
+        isBusy,
+        buttonLabel: "Send me an email"
+    };
+
     const loginStepProps: LoginStepProps = {
         email,
         password,
         onPasswordChange: handlePasswordChange,
         onSubmit: handleLogin,
+        onForgotPassword: handleOpenForgotPassword,
         isBusy,
         buttonLabel: loginButtonLabel
     };
@@ -266,8 +305,9 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         infoMessage,
         checkEmailStepProps,
         checkEmailInboxStepProps,
+        forgotPasswordStepProps,
         loginStepProps,
-        registerStepProps,
+        registerStepProps
     };
 
 }

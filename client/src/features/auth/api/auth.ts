@@ -18,6 +18,16 @@ export interface ResendConfirmationEmailPayload {
     email: string;
 }
 
+export interface ForgotPasswordPayload {
+    email: string;
+}
+
+export interface ResetPasswordPayload {
+    email: string;
+    token: string;
+    newPassword: string;
+}
+
 export interface LoginPayload {
     email: string;
     password: string;
@@ -108,10 +118,34 @@ export async function confirmEmail(payload: ConfirmEmailPayload): Promise<{ mess
     return response.json();
 }
 
-export async function resendConfirmationEmail(
-    payload: ResendConfirmationEmailPayload
-): Promise<{ message: string; confirmationLink?: string }> {
+export async function resendConfirmationEmail( payload: ResendConfirmationEmailPayload ): Promise<{ message: string; confirmationLink?: string }> {
     const response = await fetch(`${API_BASE_PATH}/auth/resend-confirmation-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw await parseErrorResponse(response);
+
+    return response.json();
+}
+
+export async function forgotPassword( payload: ForgotPasswordPayload ): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_PATH}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw await parseErrorResponse(response);
+
+    return response.json();
+}
+
+export async function resetPassword( payload: ResetPasswordPayload ): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_PATH}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

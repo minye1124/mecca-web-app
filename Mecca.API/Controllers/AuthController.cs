@@ -136,7 +136,7 @@ public class AuthController : ControllerBase
                     message = "Your email is already confirmed. You can now log in."
                 });
             }
-            
+
             return BadRequest(new
             {
                 code = AuthErrorCodes.ValidationFailed,
@@ -162,16 +162,86 @@ public class AuthController : ControllerBase
             var confirmationLink = $"{_configuration["ClientUrl"]}/confirm-email?userId={user.Id}&token={encodedToken}";
 
             await _emailService.SendEmailConfirmationAsync(user.Email!, confirmationLink);
-
-            return Ok(new
-            {
-                message = "If your account requires email verification, a confirmation email has been sent.",
-            });
         }
 
         return Ok(new
         {
             message = "If your account requires email verification, a confirmation email has been sent."
+        });
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+
+        if (user != null && user.EmailConfirmed)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var resetLink = $"{_configuration["ClientUrl"]}/reset-password?email={Uri.EscapeDataString(user.Email!)}&token={encodedToken}";
+
+            await _emailService.SendPasswordResetAsync(user.Email!, resetLink);
+        }
+
+        return Ok(new
+        {
+            message = "If an account exists for this email, password reset instructions have been sent."
+        });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user == null)
+        {
+            return BadRequest(new
+            {
+                code = AuthErrorCodes.ValidationFailed,
+                message = "Invalid or expired password reset link."
+            });
+        }
+
+        if (request.NewPassword.Any(char.IsWhiteSpace))
+        {
+            return BadRequest(new
+            {
+                code = AuthErrorCodes.PasswordContainsWhitespace,
+                message = "Password cannot contain spaces."
+            });
+        }
+
+        var isSameAsCurrentPassword = await _userManager.CheckPasswordAsync(user, request.NewPassword);
+        if (isSameAsCurrentPassword)
+        {
+            return BadRequest(new
+            {
+                code = AuthErrorCodes.PasswordSameAsCurrent,
+                message = "New password must be different from your current password."
+            });
+        }
+
+        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token));
+        var result = await _userManager.ResetPasswordAsync(user, decodedToken, request.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            var firstError = result.Errors.First();
+            var mapped = MapIdentityError(firstError);
+
+            return BadRequest(new
+            {
+                code = mapped.Code,
+                message = mapped.Message == "We couldn't create your account. Please check your details and try again."
+                    ? "Invalid or expired password reset link."
+                    : mapped.Message
+            });
+        }
+
+        return Ok(new
+        {
+            message = "Your password has been reset successfully."
         });
     }
 
