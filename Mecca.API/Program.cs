@@ -3,12 +3,14 @@ using Mecca.API.Data;
 using Mecca.API.Models;
 using Mecca.API.Services;
 using Mecca.API.Contracts;
+using Mecca.API.Middleware;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using AspNetCoreRateLimit;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,6 +57,10 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequiredLength = 8;
     options.User.RequireUniqueEmail = true;
+
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
@@ -65,7 +71,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.Name = "mecca.sid";
-    
+
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
 
@@ -87,6 +93,15 @@ builder.Services.AddOptions<CookieAuthenticationOptions>(IdentityConstants.Appli
     options.SessionStore = ticketStore;
 });
 
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.Cookie.Name = "__Host-mecca.xsrf";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
 builder.Services.AddAuthentication().AddGoogle(options =>
 {
     options.SignInScheme = IdentityConstants.ExternalScheme;
@@ -95,7 +110,10 @@ builder.Services.AddAuthentication().AddGoogle(options =>
     options.CallbackPath = "/api/signin-google";
 });
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<GoogleAuthService>();
+builder.Services.AddScoped<IEmailService, SendGridEmailService>();
 
 builder.Services.AddCors(options =>
 {
@@ -136,11 +154,27 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["Content-Security-Policy"] =
+        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
+
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Permissions-Policy"] =
+        "camera=(), microphone=(), geolocation=(self), payment=(self), usb=(), fullscreen=(self)";
+
+    await next();
+});
+
 // Pipelines
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseMiddleware<AuditRateLimitMiddleware>();
 app.UseIpRateLimiting();
 app.UseAuthentication();
+app.UseMiddleware<AntiforgeryValidationMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

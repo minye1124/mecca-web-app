@@ -9,6 +9,25 @@ export interface AuthUserResponse {
     };
 }
 
+export interface ConfirmEmailPayload {
+    userId: string;
+    token: string;
+}
+
+export interface ResendConfirmationEmailPayload {
+    email: string;
+}
+
+export interface ForgotPasswordPayload {
+    email: string;
+}
+
+export interface ResetPasswordPayload {
+    email: string;
+    token: string;
+    newPassword: string;
+}
+
 export interface LoginPayload {
     email: string;
     password: string;
@@ -42,6 +61,21 @@ export class AuthApiError extends Error {
 }
 
 //------------------helpers------------------
+async function fetchWithCsrf(input: RequestInfo | URL, init: RequestInit = {}) {
+    const token = await getCsrfToken();
+
+    const headers = new Headers(init.headers);
+    headers.set("X-CSRF-TOKEN", token);
+
+    const response = await fetch(input, {
+        ...init,
+        headers,
+        credentials: "include",
+    });
+
+    return response;
+}
+
 async function parseErrorResponse(response: Response): Promise<AuthApiError> {
     if (response.status === 429) {
         const retryAfterHeader = response.headers.get("Retry-After");
@@ -71,6 +105,24 @@ async function parseErrorResponse(response: Response): Promise<AuthApiError> {
 }
 
 //------------------functions------------------
+let csrfToken: string | null = null;
+
+export async function getCsrfToken(): Promise<string> {
+    if (csrfToken) return csrfToken;
+
+    const response = await fetch(`${API_BASE_PATH}/auth/csrf-token`, {
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to get CSRF token.");
+    }
+
+    const data = (await response.json()) as { csrfToken: string };
+    csrfToken = data.csrfToken;
+    return csrfToken;
+}
+
 export async function checkEmailExists(email: string): Promise<boolean> {
     const response = await fetch(`${API_BASE_PATH}/auth/check-email?email=${encodeURIComponent(email)}`, {
         credentials: "include",
@@ -86,11 +138,58 @@ export function getGoogleLoginUrl(): string {
     return `${API_BASE_PATH}/auth/google-login`;
 }
 
-export async function login(payload: LoginPayload): Promise<AuthUserResponse> {
-    const response = await fetch(`${API_BASE_PATH}/auth/login`, {
+export async function confirmEmail(payload: ConfirmEmailPayload): Promise<{ message: string }> {
+    const response = await fetchWithCsrf(`${API_BASE_PATH}/auth/confirm-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw await parseErrorResponse(response);
+
+    return response.json();
+}
+
+export async function resendConfirmationEmail( payload: ResendConfirmationEmailPayload ): Promise<{ message: string; confirmationLink?: string }> {
+    const response = await fetchWithCsrf(`${API_BASE_PATH}/auth/resend-confirmation-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw await parseErrorResponse(response);
+
+    return response.json();
+}
+
+export async function forgotPassword( payload: ForgotPasswordPayload ): Promise<{ message: string }> {
+    const response = await fetchWithCsrf(`${API_BASE_PATH}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw await parseErrorResponse(response);
+
+    return response.json();
+}
+
+export async function resetPassword( payload: ResetPasswordPayload ): Promise<{ message: string }> {
+    const response = await fetchWithCsrf(`${API_BASE_PATH}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw await parseErrorResponse(response);
+
+    return response.json();
+}
+
+export async function login(payload: LoginPayload): Promise<AuthUserResponse> {
+    const response = await fetchWithCsrf(`${API_BASE_PATH}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
     });
 
@@ -100,11 +199,10 @@ export async function login(payload: LoginPayload): Promise<AuthUserResponse> {
 }
 
 export async function register(payload: RegisterPayload): Promise<AuthUserResponse> {
-    const response = await fetch(`${API_BASE_PATH}/auth/register`, {
+    const response = await fetchWithCsrf(`${API_BASE_PATH}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        credentials: "include",
     });
 
     if (!response.ok) throw await parseErrorResponse(response);
@@ -113,9 +211,8 @@ export async function register(payload: RegisterPayload): Promise<AuthUserRespon
 }
 
 export async function logout(): Promise<void> {
-    const response = await fetch(`${API_BASE_PATH}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
+    const response = await fetchWithCsrf(`${API_BASE_PATH}/auth/logout`, {
+        method: "POST"
     });
 
     if (!response.ok) throw await parseErrorResponse(response);

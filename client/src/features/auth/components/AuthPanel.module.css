@@ -7,6 +7,18 @@
   border-radius: 4px;
 }
 
+.info {
+  background-color: #eef8f1;
+  color: #25643b;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  border: 1px solid #b8dcc4;
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .content {
   padding: 60px 40px;
   text-align: center;
@@ -98,3 +110,67 @@
   color: #999;
   margin-top: 16px;
 }
+
+.secondaryAction {
+  margin: 8px 0 24px;
+  font-size: 14px;
+  color: #222;
+  text-align: center;
+}
+
+.forgotPasswordFieldGroup {
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.forgotPasswordFieldLabel {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: #666;
+}
+
+.forgotPasswordEmailRow {
+  display: flex;
+  align-items: stretch;
+}
+
+.forgotPasswordEmailInput {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-right: 0;
+  font-size: 14px;
+  box-sizing: border-box;
+  background: #fff;
+  color: #111;
+}
+
+.forgotPasswordEmailInput:focus {
+  outline: none;
+  border-color: #000;
+}
+
+.editEmailButton {
+  width: 44px;
+  min-height: 44px;
+  border-left: 0;
+  border: 1px solid #ccc;
+  background: #f7f7f7;
+  color: #111;
+  font-size: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.editEmailButton:hover {
+  background: #ebebeb;
+}
+
+.editEmailButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+

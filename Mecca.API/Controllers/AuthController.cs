@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Mecca.API.Contracts;
+using System.Text;
+using Microsoft.AspNetCore.Antiforgery;
 
 namespace Mecca.API.Controllers;
 
@@ -18,13 +20,19 @@ public class AuthController : ControllerBase
     private readonly SignInManager<AppUser> _signInManager;
     private readonly GoogleAuthService _googleAuthService;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
+    private readonly IAuditLogService _auditLogService;
+    private readonly IAntiforgery _antiforgery;
 
-    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, GoogleAuthService googleAuthService, IConfiguration configuration)
+    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, GoogleAuthService googleAuthService, IConfiguration configuration, IEmailService emailService, IAuditLogService auditLogService, IAntiforgery antiforgery)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _googleAuthService = googleAuthService;
         _configuration = configuration;
+        _emailService = emailService;
+        _auditLogService = auditLogService;
+        _antiforgery = antiforgery;
     }
 
     private static (string Code, string Message) MapIdentityError(IdentityError error)
@@ -40,6 +48,18 @@ public class AuthController : ControllerBase
             "PasswordRequiresNonAlphanumeric" => (AuthErrorCodes.PasswordMissingSpecial, "Password must include at least one special character."),
             _ => (AuthErrorCodes.RegistrationFailed, "We couldn't create your account. Please check your details and try again.")
         };
+    }
+
+    [AllowAnonymous]
+    [HttpGet("csrf-token")]
+    public IActionResult GetCsrfToken()
+    {
+        var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
+
+        return Ok(new
+        {
+            csrfToken = tokens.RequestToken
+        });
     }
 
     [HttpGet("check-email")]
@@ -71,7 +91,7 @@ public class AuthController : ControllerBase
                 message = "Password cannot contain spaces."
             });
         }
-        
+
         var result = await _userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
@@ -86,24 +106,175 @@ public class AuthController : ControllerBase
             });
         }
 
-        await _signInManager.SignInAsync(user, isPersistent: true);
+        await _auditLogService.WriteAsync(AuditEventTypes.AccountCreated, userId: user.Id, email: user.Email, reason: "email_password_registration");
+
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+        var confirmationLink = $"{_configuration["ClientUrl"]}/confirm-email?userId={user.Id}&token={encodedToken}";
+        await _emailService.SendEmailConfirmationAsync(user.Email!, confirmationLink);
+
         return Ok(new
         {
-            user = new
+            requiresEmailConfirmation = true,
+            email = user.Email,
+            message = "Registration successful. Please check your email to verify your account.",
+            confirmationLink
+        });
+    }
+
+    [HttpPost("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
+    {
+        var user = await _userManager.FindByIdAsync(request.UserId);
+        if (user == null)
+        {
+            return BadRequest(new
             {
-                firstName = user.FirstName,
-                lastName = user.LastName,
-                email = user.Email,
+                code = AuthErrorCodes.ValidationFailed,
+                message = "Invalid confirmation link."
+            });
+        }
+        if (user.EmailConfirmed)
+        {
+            return Ok(new
+            {
+                message = "Your email is already confirmed. You can now log in."
+            });
+        }
+        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token));
+        var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+
+        if (!result.Succeeded)
+        {
+            var refreshedUser = await _userManager.FindByIdAsync(request.UserId);
+
+            if (refreshedUser?.EmailConfirmed == true)
+            {
+                return Ok(new
+                {
+                    message = "Your email is already confirmed. You can now log in."
+                });
             }
+
+            return BadRequest(new
+            {
+                code = AuthErrorCodes.ValidationFailed,
+                message = "Invalid or expired confirmation link."
+            });
+        }
+
+        return Ok(new
+        {
+            message = "Email confirmed successfully."
+        });
+    }
+
+    [HttpPost("resend-confirmation-email")]
+    public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailRequest request)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+
+        if (user != null && !user.EmailConfirmed)
+        {
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var confirmationLink = $"{_configuration["ClientUrl"]}/confirm-email?userId={user.Id}&token={encodedToken}";
+
+            await _emailService.SendEmailConfirmationAsync(user.Email!, confirmationLink);
+        }
+
+        return Ok(new
+        {
+            message = "If your account requires email verification, a confirmation email has been sent."
+        });
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+
+        if (user != null && user.EmailConfirmed)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var resetLink = $"{_configuration["ClientUrl"]}/reset-password?email={Uri.EscapeDataString(user.Email!)}&token={encodedToken}";
+
+            await _emailService.SendPasswordResetAsync(user.Email!, resetLink);
+        }
+
+        return Ok(new
+        {
+            message = "If an account exists for this email, password reset instructions have been sent."
+        });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user == null)
+        {
+            return BadRequest(new
+            {
+                code = AuthErrorCodes.ValidationFailed,
+                message = "Invalid or expired password reset link."
+            });
+        }
+
+        if (request.NewPassword.Any(char.IsWhiteSpace))
+        {
+            return BadRequest(new
+            {
+                code = AuthErrorCodes.PasswordContainsWhitespace,
+                message = "Password cannot contain spaces."
+            });
+        }
+
+        var isSameAsCurrentPassword = await _userManager.CheckPasswordAsync(user, request.NewPassword);
+        if (isSameAsCurrentPassword)
+        {
+            return BadRequest(new
+            {
+                code = AuthErrorCodes.PasswordSameAsCurrent,
+                message = "New password must be different from your current password."
+            });
+        }
+
+        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token));
+        var result = await _userManager.ResetPasswordAsync(user, decodedToken, request.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            var firstError = result.Errors.First();
+            var mapped = MapIdentityError(firstError);
+
+            return BadRequest(new
+            {
+                code = mapped.Code,
+                message = mapped.Message == "We couldn't create your account. Please check your details and try again."
+                    ? "Invalid or expired password reset link."
+                    : mapped.Message
+            });
+        }
+
+        await _auditLogService.WriteAsync(AuditEventTypes.PasswordChanged, userId: user.Id, email: user.Email, reason: "password_reset");
+
+        return Ok(new
+        {
+            message = "Your password has been reset successfully."
         });
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
+        var email = request.Email.Trim().ToLowerInvariant();
+        var user = await _userManager.FindByEmailAsync(email);
+
         if (user == null)
         {
+            await _auditLogService.WriteAsync(AuditEventTypes.FailedLogin, email: email, reason: "user_not_found");
             return Unauthorized(new
             {
                 code = AuthErrorCodes.InvalidCredentials,
@@ -111,9 +282,44 @@ public class AuthController : ControllerBase
             });
         }
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+        if (!user.EmailConfirmed)
+        {
+            await _auditLogService.WriteAsync(AuditEventTypes.FailedLogin, userId: user.Id, email: user.Email, reason: "email_not_confirmed");
+
+            return Unauthorized(new
+            {
+                code = AuthErrorCodes.EmailNotConfirmed,
+                message = "Please verify your email before logging in."
+            });
+        }
+
+        if (await _userManager.IsLockedOutAsync(user))
+        {
+            return StatusCode(StatusCodes.Status423Locked, new
+            {
+                code = AuthErrorCodes.AccountLocked,
+                message = "Your account is temporarily locked due to too many failed login attempts. Please try again later."
+            });
+        }
+
+        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
+
+        if (result.IsLockedOut)
+        {
+            await _auditLogService.WriteAsync(AuditEventTypes.FailedLogin, userId: user.Id, email: user.Email, reason: "invalid_password");
+            await _auditLogService.WriteAsync(AuditEventTypes.AccountLocked, userId: user.Id, email: user.Email, reason: "failed_login_threshold_reached");
+
+            return StatusCode(StatusCodes.Status423Locked, new
+            {
+                code = AuthErrorCodes.AccountLocked,
+                message = "Your account is temporarily locked due to too many failed login attempts. Please try again later."
+            });
+        }
+
         if (!result.Succeeded)
         {
+            await _auditLogService.WriteAsync(AuditEventTypes.FailedLogin, userId: user.Id, email: user.Email, reason: "invalid_password");
+
             return Unauthorized(new
             {
                 code = AuthErrorCodes.InvalidCredentials,
@@ -122,6 +328,9 @@ public class AuthController : ControllerBase
         }
 
         await _signInManager.SignInAsync(user, isPersistent: true);
+
+        await _auditLogService.WriteAsync(AuditEventTypes.SuccessfulLogin, userId: user.Id, email: user.Email, reason: "email_password");
+
         return Ok(new
         {
             user = new
@@ -155,6 +364,8 @@ public class AuthController : ControllerBase
         }
 
         await _signInManager.SignInAsync(result.User, isPersistent: true);
+        await _auditLogService.WriteAsync(AuditEventTypes.SuccessfulLogin, userId: result.User.Id, email: result.User.Email, reason: "google_oauth");
+
         return Redirect(_configuration["ClientUrl"]!);
     }
 

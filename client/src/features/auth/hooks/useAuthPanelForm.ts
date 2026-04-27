@@ -4,15 +4,17 @@ import { useAuth } from "../../../context/AuthContext";
 import { formatDobInput, toIsoDate } from "../../../utils/date";
 import { validateEmailFormat, validateRegisterForm } from "../../../utils/validation";
 
-import { AuthApiError, checkEmailExists, login as loginRequest, register as registerRequest } from "../api/auth";
+import { AuthApiError, checkEmailExists, resendConfirmationEmail, forgotPassword, login as loginRequest, register as registerRequest } from "../api/auth";
 import type { CheckEmailStepProps } from "../components/steps/CheckEmailStep";
+import type { CheckEmailInboxStepProps } from "../components/steps/CheckEmailInboxStep";
+import type { ForgotPasswordStepProps } from "../components/steps/ForgotPasswordStep";
 import type { LoginStepProps } from "../components/steps/LoginStep";
 import type { RegisterStepProps } from "../components/steps/RegisterStep";
 import { registerErrorMessages } from "../config/registerErrorMessages";
 import { createRegisterProfileFields, createRegisterPasswordFields } from "../config/registerFields";
 
-type Step = "inputEmail" | "login" | "register";
-type Status = "idle" | "checkingEmail" | "registering" | "loggingIn";
+type Step = "inputEmail" | "login" | "register" | "checkEmailInbox" | "forgotPassword";
+type Status = "idle" | "checkingEmail" | "registering" | "loggingIn" | "resendingConfirmation" | "sendingPasswordReset";
 
 export interface UseAuthPanelFormOptions {
     onClose: () => void;
@@ -33,9 +35,13 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     const [agreeTerms, setAgreeTerms] = useState(false);
     const [status, setStatus] = useState<Status>("idle");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
     const isBusy = status !== "idle";
-    const clearError = () => setErrorMessage(null);
+    const clearMessages = () => {
+        setErrorMessage(null);
+        setInfoMessage(null);
+    };
 
     // derived labels
     const nextButtonLabel = status === "checkingEmail" ? "Checking..." : "Next";
@@ -48,18 +54,69 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     // field handlers
     const handleEmailChange = (value: string) => {
         setEmail(value);
-        clearError();
+        clearMessages();
     }
 
     const handlePasswordChange = (value: string) => {
         setPassword(value);
-        clearError();
+        clearMessages();
     }
 
     const handleConfirmPasswordChange = (value: string) => {
         setConfirmPassword(value);
-        clearError();
+        clearMessages();
     }
+
+    const handleReturnToLogin = () => {
+        setStep("login");
+        clearMessages();
+    };
+
+    const handleResendConfirmation = async () => {
+        setErrorMessage(null);
+        setStatus("resendingConfirmation");
+
+        try {
+            const response = await resendConfirmationEmail({ email });
+            setInfoMessage(response.message);
+        } catch (error) {
+            if (error instanceof AuthApiError) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage("We couldn't resend the verification email. Please try again.");
+            }
+        } finally {
+            setStatus("idle");
+        }
+    };
+
+    const handleOpenForgotPassword = () => {
+        clearMessages();
+        setStep("forgotPassword");
+    };
+
+    const handleBackToLoginFromForgotPassword = () => {
+        clearMessages();
+        setStep("login");
+    };
+
+    const handleForgotPassword = async () => {
+        clearMessages();
+        setStatus("sendingPasswordReset");
+
+        try {
+            const response = await forgotPassword({ email });
+            setInfoMessage(response.message);
+        } catch (error) {
+            if (error instanceof AuthApiError) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage("We couldn't send password reset instructions. Please try again.");
+            }
+        } finally {
+            setStatus("idle");
+        }
+    };
 
     const handleFirstNameChange = (value: string) => setFirstName(value);
     const handleLastNameChange = (value: string) => setLastName(value);
@@ -72,7 +129,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     const handleAgreeMarketingChange = (value: boolean) => setAgreeMarketing(value);
     const handleAgreeTermsChange = (value: boolean) => {
         setAgreeTerms(value);
-        clearError();
+        clearMessages();
     }
 
     // submit or navigation
@@ -124,7 +181,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
 
         setStatus("registering");
         try {
-            const registerResponse = await registerRequest({
+            await registerRequest({
                 email,
                 password,
                 firstName,
@@ -133,9 +190,10 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
                 phoneNumber: mobile || null,
                 agreeMarketing
             });
-            login({ user: registerResponse.user });
             setErrorMessage(null);
-            onClose();
+            setStep("checkEmailInbox");
+            setPassword("");
+            setConfirmPassword("");
 
         } catch (error) {
             if (error instanceof AuthApiError) {
@@ -156,6 +214,9 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         } catch (error) {
             if (error instanceof AuthApiError) {
                 setErrorMessage(error.message);
+                if (error.code === "EMAIL_NOT_CONFIRMED") {
+                    setStep("checkEmailInbox");
+                }
             } else {
                 setErrorMessage("Invalid email or password. Please try again.");
             }
@@ -166,7 +227,7 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
 
     const handleBackToCheckEmail = () => {
         setStep("inputEmail");
-        clearError();
+        clearMessages();
     }
 
     const checkEmailStepProps: CheckEmailStepProps = {
@@ -177,11 +238,29 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         buttonLabel: nextButtonLabel
     };
 
+    const checkEmailInboxStepProps: CheckEmailInboxStepProps = {
+        email,
+        onSubmit: handleReturnToLogin,
+        onResend: handleResendConfirmation,
+        isBusy,
+        buttonLabel: "Back to login"
+    };
+
+    const forgotPasswordStepProps: ForgotPasswordStepProps = {
+        email,
+        onBackToLogin: handleBackToLoginFromForgotPassword,
+        onBackToCheckEmail: handleBackToCheckEmail,
+        onSubmit: handleForgotPassword,
+        isBusy,
+        buttonLabel: "Send me an email"
+    };
+
     const loginStepProps: LoginStepProps = {
         email,
         password,
         onPasswordChange: handlePasswordChange,
         onSubmit: handleLogin,
+        onForgotPassword: handleOpenForgotPassword,
         isBusy,
         buttonLabel: loginButtonLabel
     };
@@ -199,7 +278,6 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
         onPasswordChange: handlePasswordChange,
         onConfirmPasswordChange: handleConfirmPasswordChange
     });
-
 
     const registerStepProps: RegisterStepProps = {
         onBackToCheckEmail: handleBackToCheckEmail,
@@ -224,9 +302,12 @@ export function useAuthPanelForm({ onClose }: UseAuthPanelFormOptions) {
     return {
         step,
         errorMessage,
+        infoMessage,
         checkEmailStepProps,
+        checkEmailInboxStepProps,
+        forgotPasswordStepProps,
         loginStepProps,
-        registerStepProps,
+        registerStepProps
     };
 
 }

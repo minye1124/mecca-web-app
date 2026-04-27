@@ -10,11 +10,12 @@ export interface LoginStepProps {
     password: string;
     onPasswordChange: (value: string) => void;
     onSubmit: () => void;
+    onForgotPassword: () => void;
     isBusy: boolean;
     buttonLabel: string;
 }
 
-function LoginStep({ email, password, onPasswordChange, onSubmit, isBusy, buttonLabel }: LoginStepProps) {
+function LoginStep({ email, password, onPasswordChange, onSubmit, onForgotPassword, isBusy, buttonLabel }: LoginStepProps) {
     return (
         <AuthStepShell
             title="Hello! We're so excited to have you here."
@@ -41,8 +42,15 @@ function LoginStep({ email, password, onPasswordChange, onSubmit, isBusy, button
             />
 
             <div className={styles.forgotPassword}>
-                <a href="/forgot-password">Can't remember your password?</a>
-            </div> 
+                <button
+                    type="button"
+                    className={styles.linkButton}
+                    onClick={onForgotPassword}
+                    disabled={isBusy}
+                >
+                    Can't remember your password?
+                </button>
+            </div>
         </AuthStepShell>
     );
 }
