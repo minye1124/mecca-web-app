@@ -13,6 +13,7 @@ export type OrderItem = {
   variant?: string;
   sku?: string;
   quantity: number;
+  unitPrice: Money;
   lineTotal: Money;
   image?: OrderItemImage;
 };
@@ -25,6 +26,21 @@ export type PricingLine = {
   money?: Money;
   displayValue?: string;
   tone?: PricingLineTone;
+};
+
+export type CheckoutPricingSummary = {
+  subtotal: Money;
+  shipping: Money;
+  discount: Money;
+  gst: Money;
+  total: Money;
+};
+
+export type CheckoutSummaryResponse = {
+  title: string;
+  items: OrderItem[];
+  pricing: CheckoutPricingSummary;
+  beautyLoopPreview?: BeautyLoopPointsPreview;
 };
 
 export type BeautyLoopPointsPreview = {

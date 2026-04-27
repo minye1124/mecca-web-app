@@ -148,6 +148,14 @@
   padding-bottom: 0;
 }
 
+.itemImage {
+  width: 88px;
+  height: 112px;
+  display: block;
+  object-fit: cover;
+  border: 1px solid #ece7de;
+}
+
 .itemImagePlaceholder {
   width: 88px;
   height: 112px;
@@ -207,4 +215,11 @@
   font-weight: 600;
   line-height: 1.4;
   white-space: nowrap;
+}
+
+.emptyState {
+  margin: 16px 0 0;
+  color: #6f6f6f;
+  font-size: 14px;
+  line-height: 1.5;
 }

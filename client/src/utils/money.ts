@@ -5,5 +5,5 @@ export function formatMoney(money: Money, locale = "en-AU") {
     style: "currency",
     currency: money.currency,
     minimumFractionDigits: 2,
-  }).format(money.amount);
+  }).format(money.amountInCents / 100);
 }

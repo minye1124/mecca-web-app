@@ -1,4 +1,4 @@
 export type Money = {
-  amount: number;
+  amountInCents: number;
   currency: "AUD";
 };

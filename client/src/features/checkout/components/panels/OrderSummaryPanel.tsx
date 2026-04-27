@@ -25,6 +25,12 @@ function renderPricingLine(line: PricingLine) {
 function OrderSummaryPanel({ summary }: OrderSummaryPanelProps) {
     const [isBagExpanded, setBagExpanded] = useState(false);
 
+    const visibleItems = summary.items.filter((item) => item.quantity > 0);
+
+    const totalQuantity = visibleItems.reduce((sum, item) => {
+        return sum + item.quantity;
+    }, 0);
+
     return (
         <section className={styles.section} aria-label="Order summary">
             <div className={styles.summaryCard}>
@@ -74,7 +80,7 @@ function OrderSummaryPanel({ summary }: OrderSummaryPanelProps) {
                     onClick={() => setBagExpanded((current) => !current)}
                 >
                     <span className={styles.bagTitle}>
-                        My Bag - {summary.items.length} item{summary.items.length > 1 ? "s" : ""}
+                        My Bag - {totalQuantity} item{totalQuantity !== 1 ? "s" : ""}
                     </span>
 
                     <ChevronDownIcon
@@ -86,33 +92,45 @@ function OrderSummaryPanel({ summary }: OrderSummaryPanelProps) {
                 </button>
 
                 {isBagExpanded ? (
-                    <ul className={styles.itemsList}>
-                        {summary.items.map((item) => (
-                            <li key={item.id} className={styles.itemRow}>
-                                <div className={styles.itemImagePlaceholder} aria-hidden="true" />
+                    visibleItems.length > 0 ? (
+                        <ul className={styles.itemsList}>
+                            {visibleItems.map((item) => (
+                                <li key={item.id} className={styles.itemRow}>
+                                    {item.image ? (
+                                        <img
+                                            src={item.image.src}
+                                            alt={item.image.alt}
+                                            loading="lazy"
+                                            decoding="async"
+                                            className={styles.itemImage}
+                                        />
+                                    ) : (<div className={styles.itemImagePlaceholder} aria-hidden="true" />)
+                                    }
 
-                                <div className={styles.itemBody}>
-                                    <div className={styles.itemDetails}>
-                                        <p className={styles.itemBrand}>{item.brand}</p>
-                                        <p className={styles.itemName}>{item.name}</p>
 
-                                        {item.sku ? (
-                                            <p className={styles.itemMeta}>{item.sku}</p>
-                                        ) : null}
+                                    <div className={styles.itemBody}>
+                                        <div className={styles.itemDetails}>
+                                            <p className={styles.itemBrand}>{item.brand}</p>
+                                            <p className={styles.itemName}>{item.name}</p>
 
-                                        {item.variant ? (
-                                            <p className={styles.itemMeta}>{item.variant}</p>
-                                        ) : null}
+                                            {item.sku ? (
+                                                <p className={styles.itemMeta}>{item.sku}</p>
+                                            ) : null}
+
+                                            {item.variant ? (
+                                                <p className={styles.itemMeta}>{item.variant}</p>
+                                            ) : null}
+                                        </div>
+
+                                        <div className={styles.itemFooter}>
+                                            <p className={styles.itemQuantity}>Qty {item.quantity}</p>
+                                            <p className={styles.itemPrice}>{formatMoney(item.lineTotal)}</p>
+                                        </div>
                                     </div>
-
-                                    <div className={styles.itemFooter}>
-                                        <p className={styles.itemQuantity}>Qty {item.quantity}</p>
-                                        <p className={styles.itemPrice}>{formatMoney(item.lineTotal)}</p>
-                                    </div>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (<p className={styles.emptyState}>Your bag is empty.</p>)
                 ) : null}
 
             </div>
