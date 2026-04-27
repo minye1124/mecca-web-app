@@ -25,7 +25,7 @@ export const homePageContent: HomePageContent = {
         brand: "Korres",
         name: "Greek Yoghurt Probiotic Superdose Face Mask",
         price: {
-          amount: 62,
+          amountInCents: 6200,
           currency: "AUD",
         },
         media: {
@@ -38,7 +38,7 @@ export const homePageContent: HomePageContent = {
         brand: "PHLUR",
         name: "Vanilla Skin Body Oil",
         price: {
-          amount: 98,
+          amountInCents: 9800,
           currency: "AUD",
         },
         media: {
@@ -73,7 +73,7 @@ export const homePageContent: HomePageContent = {
         brand: "Summer Fridays",
         name: "Lip Butter Balm",
         price: {
-          amount: 41,
+          amountInCents: 4100,
           currency: "AUD",
         },
         socialProof: {
@@ -90,7 +90,7 @@ export const homePageContent: HomePageContent = {
         brand: "rhode",
         name: "Glazing Milk Ceramide Facial Essence",
         price: {
-          amount: 55,
+          amountInCents: 5500,
           currency: "AUD",
         },
         socialProof: {
