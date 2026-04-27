@@ -5,7 +5,13 @@ export type ValidationResult =
 export type RegisterFormErrorCode =
     | "EMAIL_INVALID"
     | "FIRST_NAME_REQUIRED"
+    | "FIRST_NAME_TOO_SHORT"
+    | "FIRST_NAME_TOO_LONG"
+    | "FIRST_NAME_INVALID"
     | "LAST_NAME_REQUIRED"
+    | "LAST_NAME_TOO_SHORT"
+    | "LAST_NAME_TOO_LONG"
+    | "LAST_NAME_INVALID"
     | "TERMS_NOT_ACCEPTED"
     | PasswordFieldErrorCode;
 
@@ -27,8 +33,56 @@ interface RegisterFormInput {
     termsAccepted: boolean;
 }
 
+const NAME_REGEX = /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/;
+const NAME_MIN_LENGTH = 2;
+const NAME_MAX_LENGTH = 50;
+
 export function validateEmailFormat(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validateName(value: string, field: "firstName" | "lastName"):
+    | { ok: true }
+    | {
+        ok: false;
+        code:
+        | "FIRST_NAME_REQUIRED"
+        | "FIRST_NAME_TOO_SHORT"
+        | "FIRST_NAME_TOO_LONG"
+        | "FIRST_NAME_INVALID"
+        | "LAST_NAME_REQUIRED"
+        | "LAST_NAME_TOO_SHORT"
+        | "LAST_NAME_TOO_LONG"
+        | "LAST_NAME_INVALID";
+    } {
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+        return {
+            ok: false,
+            code: field === "firstName" ? "FIRST_NAME_REQUIRED" : "LAST_NAME_REQUIRED",
+        };
+    }
+    if (trimmed.length < NAME_MIN_LENGTH) {
+        return {
+            ok: false,
+            code: field === "firstName" ? "FIRST_NAME_TOO_SHORT" : "LAST_NAME_TOO_SHORT",
+        };
+    }
+    if (trimmed.length > NAME_MAX_LENGTH) {
+        return {
+            ok: false,
+            code: field === "firstName" ? "FIRST_NAME_TOO_LONG" : "LAST_NAME_TOO_LONG",
+        };
+    }
+    if (!NAME_REGEX.test(trimmed)) {
+        return {
+            ok: false,
+            code: field === "firstName" ? "FIRST_NAME_INVALID" : "LAST_NAME_INVALID",
+        };
+    }
+
+    return { ok: true };
 }
 
 export function validatePasswordFields(password: string, confirmPassword: string):
@@ -60,12 +114,16 @@ export function validatePasswordFields(password: string, confirmPassword: string
 }
 
 export function validateRegisterForm(input: RegisterFormInput): ValidationResult {
-    if (!input.firstName.trim()) {
-        return { ok: false, code: "FIRST_NAME_REQUIRED" };
+    const firstNameValidation = validateName(input.firstName, "firstName");
+    if (firstNameValidation.ok === false) {
+        return firstNameValidation;
     }
-    if (!input.lastName.trim()) {
-        return { ok: false, code: "LAST_NAME_REQUIRED" };
+
+    const lastNameValidation = validateName(input.lastName, "lastName");
+    if (lastNameValidation.ok === false) {
+        return lastNameValidation;
     }
+    
     if (!validateEmailFormat(input.email)) {
         return { ok: false, code: "EMAIL_INVALID" };
     }

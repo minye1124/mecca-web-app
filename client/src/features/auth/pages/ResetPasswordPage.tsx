@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type SubmitEvent} from "react";
 
 import { validatePasswordFields } from "../../../utils/validation";
 import { registerErrorMessages } from "../config/registerErrorMessages";
@@ -17,7 +17,7 @@ function ResetPasswordPage() {
 
     const hasRequiredParams = email.length > 0 && token.length > 0;
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
 
         setMessage(null);
