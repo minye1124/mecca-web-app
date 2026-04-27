@@ -8,6 +8,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Mecca.API.Contracts;
 using System.Text;
+using Microsoft.AspNetCore.Antiforgery;
 
 namespace Mecca.API.Controllers;
 
@@ -21,8 +22,9 @@ public class AuthController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
     private readonly IAuditLogService _auditLogService;
+    private readonly IAntiforgery _antiforgery;
 
-    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, GoogleAuthService googleAuthService, IConfiguration configuration, IEmailService emailService, IAuditLogService auditLogService)
+    public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, GoogleAuthService googleAuthService, IConfiguration configuration, IEmailService emailService, IAuditLogService auditLogService, IAntiforgery antiforgery)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -30,6 +32,7 @@ public class AuthController : ControllerBase
         _configuration = configuration;
         _emailService = emailService;
         _auditLogService = auditLogService;
+        _antiforgery = antiforgery;
     }
 
     private static (string Code, string Message) MapIdentityError(IdentityError error)
@@ -45,6 +48,18 @@ public class AuthController : ControllerBase
             "PasswordRequiresNonAlphanumeric" => (AuthErrorCodes.PasswordMissingSpecial, "Password must include at least one special character."),
             _ => (AuthErrorCodes.RegistrationFailed, "We couldn't create your account. Please check your details and try again.")
         };
+    }
+
+    [AllowAnonymous]
+    [HttpGet("csrf-token")]
+    public IActionResult GetCsrfToken()
+    {
+        var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
+
+        return Ok(new
+        {
+            csrfToken = tokens.RequestToken
+        });
     }
 
     [HttpGet("check-email")]
@@ -293,7 +308,7 @@ public class AuthController : ControllerBase
         {
             await _auditLogService.WriteAsync(AuditEventTypes.FailedLogin, userId: user.Id, email: user.Email, reason: "invalid_password");
             await _auditLogService.WriteAsync(AuditEventTypes.AccountLocked, userId: user.Id, email: user.Email, reason: "failed_login_threshold_reached");
-            
+
             return StatusCode(StatusCodes.Status423Locked, new
             {
                 code = AuthErrorCodes.AccountLocked,
@@ -303,8 +318,8 @@ public class AuthController : ControllerBase
 
         if (!result.Succeeded)
         {
-            await _auditLogService.WriteAsync( AuditEventTypes.FailedLogin, userId: user.Id, email: user.Email, reason: "invalid_password");
-            
+            await _auditLogService.WriteAsync(AuditEventTypes.FailedLogin, userId: user.Id, email: user.Email, reason: "invalid_password");
+
             return Unauthorized(new
             {
                 code = AuthErrorCodes.InvalidCredentials,
@@ -313,8 +328,8 @@ public class AuthController : ControllerBase
         }
 
         await _signInManager.SignInAsync(user, isPersistent: true);
-        
-        await _auditLogService.WriteAsync( AuditEventTypes.SuccessfulLogin, userId: user.Id, email: user.Email, reason: "email_password");
+
+        await _auditLogService.WriteAsync(AuditEventTypes.SuccessfulLogin, userId: user.Id, email: user.Email, reason: "email_password");
 
         return Ok(new
         {
@@ -349,7 +364,7 @@ public class AuthController : ControllerBase
         }
 
         await _signInManager.SignInAsync(result.User, isPersistent: true);
-        await _auditLogService.WriteAsync(  AuditEventTypes.SuccessfulLogin, userId: result.User.Id, email: result.User.Email, reason: "google_oauth");
+        await _auditLogService.WriteAsync(AuditEventTypes.SuccessfulLogin, userId: result.User.Id, email: result.User.Email, reason: "google_oauth");
 
         return Redirect(_configuration["ClientUrl"]!);
     }

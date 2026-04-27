@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using AspNetCoreRateLimit;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add MVC Controller, db context, identity and other services.
@@ -92,6 +93,15 @@ builder.Services.AddOptions<CookieAuthenticationOptions>(IdentityConstants.Appli
     options.SessionStore = ticketStore;
 });
 
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.Cookie.Name = "__Host-mecca.xsrf";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
 builder.Services.AddAuthentication().AddGoogle(options =>
 {
     options.SignInScheme = IdentityConstants.ExternalScheme;
@@ -164,6 +174,7 @@ app.UseCors();
 app.UseMiddleware<AuditRateLimitMiddleware>();
 app.UseIpRateLimiting();
 app.UseAuthentication();
+app.UseMiddleware<AntiforgeryValidationMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
